@@ -173,11 +173,12 @@ public partial class GRollInitiative : Control {
 			if (ActiveCreatureTreeItem != null) {
 				RemoveHighlightTreeItem(ActiveCreatureTreeItem);
 
+				nextCreatureTreeItem = ActiveCreatureTreeItem;
 				for (int i = 0; i < Math.Abs(offset); i++) {
 					if (offset > 0) {
-						nextCreatureTreeItem = ActiveCreatureTreeItem.GetNextInTree();
+						nextCreatureTreeItem = nextCreatureTreeItem.GetNextInTree();
 					} else {
-						nextCreatureTreeItem = ActiveCreatureTreeItem.GetPrevInTree();
+						nextCreatureTreeItem = nextCreatureTreeItem.GetPrevInTree();
 					}
 				}
 
@@ -186,7 +187,7 @@ public partial class GRollInitiative : Control {
 				}
 			}
 
-			if (nextCreatureTreeItem == null) {
+			if (nextCreatureTreeItem == null && Tree.GetRoot().GetChildCount() > 0) {
 				if (offset > 0) {
 					nextCreatureTreeItem = Tree.GetRoot().GetChild(0);
 				} else {
@@ -197,7 +198,9 @@ public partial class GRollInitiative : Control {
 			ActiveCreatureTreeItem = nextCreatureTreeItem;
 		}
 
-		HighlightTreeItem(ActiveCreatureTreeItem);
+		if (ActiveCreatureTreeItem != null) {
+			HighlightTreeItem(ActiveCreatureTreeItem);
+		}
 
 		UpdateUI();
 	}
