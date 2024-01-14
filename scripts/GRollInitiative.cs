@@ -86,6 +86,7 @@ public partial class GRollInitiative : Control {
 
 		Tree.GuiInput += (InputEvent inputEvent) => {
 			if (inputEvent is InputEventKey inputEventKey) {
+				// TODO: Implement select all and multi-delete (Tree.GetNextSelected).
 				if (inputEventKey.Pressed && inputEventKey.Keycode == Key.Delete) {
 					var selectedItem = Tree.GetSelected();
 
@@ -100,7 +101,7 @@ public partial class GRollInitiative : Control {
 				}
 			}
 
-			// TODO: This is currently bugged and not fully functional.
+			// TODO: This is currently bugged and not fully functional (will sometimes fire on a single click).
 			if (inputEvent is InputEventMouseButton inputEventMouseButton) {
 				if (EditableDebounce <= 0 && inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left) {
 					var treeItem = Tree.GetItemAtPosition(inputEventMouseButton.GlobalPosition);
@@ -148,6 +149,17 @@ public partial class GRollInitiative : Control {
 				AddCreatureWindow.Transient = true;
 			}
 		};
+
+		// TODO: Implement clear button with confirmation prompt.
+
+		// TODO: Implement gallery feature, which allows for entries to be saved and used later.
+		// 		 - Will need to have method to convert name-image pairs to file (easy).
+		// 		 - Will need to handle missing images (easy).
+
+		// TODO: Implement auto-saving of previous session (maybe not full save and load functionality, although with the OS-native file picker, it would be a lot easier).
+
+		// TODO: Implement distinct team colors functionality for active color.
+		// 		 - Allow for custom colors to be set with default colors of green, red, etc (easy, use ColorPicker).
 	}
 
 	public override void _Process(double delta) {
@@ -209,7 +221,7 @@ public partial class GRollInitiative : Control {
 	}
 
 	public void AddCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
-		// TODO: Better validity checks.
+		// TODO: Better validity checks for paths.
 		if (status && selectedPaths.Length > 0) {
 			try {
 				AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(selectedPaths[0]));
@@ -219,6 +231,7 @@ public partial class GRollInitiative : Control {
 	}
 
 	public void EditCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
+		// TODO: Better validity checks for paths.
 		if (status && selectedPaths.Length > 0) {
 			try {
 				Tree.GetSelected().SetIcon(0, ImageTexture.CreateFromImage(Image.LoadFromFile(selectedPaths[0])));

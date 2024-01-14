@@ -14,6 +14,7 @@ config/name="GRollInitiative"
 config/description="Enter an interesting project description here!"
 run/main_scene="res://scenes/grollinitiative.tscn"
 config/features=PackedStringArray("4.2", "C#")
+boot_splash/image="res://icon.png"
 config/icon="res://icon.png"
 
 [display]
