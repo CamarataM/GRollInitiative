@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 public partial class GRollInitiative : Control {
 	[Export]
@@ -27,6 +28,10 @@ public partial class GRollInitiative : Control {
 	public double EditableDebounce = 0;
 
 	public const string TURN_NUMBER_METADATA_KEY = "turn_number";
+
+	// Taken From 01/13/2024 10:31 PM: https://docs.godotengine.org/en/stable/classes/class_filedialog.html#class-filedialog-property-filters
+	public List<string> fileDialogFilterStringList = new List<string>() { "*.png, *.jpg, *.jpeg, *.svg, *.tga, *.webp ; Supported Images" };
+	public string defaultCurrentDirectory = ProjectSettings.GlobalizePath(System.Environment.ExpandEnvironmentVariables("%USERPROFILE%\\Pictures"));
 
 	public override void _Ready() {
 		TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, 0);
@@ -71,6 +76,10 @@ public partial class GRollInitiative : Control {
 					var selectedItem = Tree.GetSelected();
 
 					if (selectedItem != null) {
+						if (selectedItem == ActiveCreatureTreeItem) {
+							ActiveCreatureTreeItem = selectedItem.GetPrevInTree();
+						}
+
 						selectedItem.GetParent().RemoveChild(selectedItem);
 						UpdateUI();
 					}
@@ -87,7 +96,7 @@ public partial class GRollInitiative : Control {
 						treeItem.CallDeferred(TreeItem.MethodName.SetEditable, 2, true);
 
 						if (EditableCooldown > 0 && Tree.GetColumnAtPosition(inputEventMouseButton.GlobalPosition) == 0) {
-							GD.Print("TODO: Open image selector.");
+							OpenFileDialog(nameof(EditCreatureImageCallback));
 						}
 
 						EditableCooldown = 0.5;
@@ -102,27 +111,16 @@ public partial class GRollInitiative : Control {
 		};
 
 		NextCreatureButton.Pressed += () => {
-			OffsetCurrentTreeItem(1);
+			OffsetActiveTreeItem(1);
 		};
 
 		PreviousCreatureButton.Pressed += () => {
-			OffsetCurrentTreeItem(-1);
+			OffsetActiveTreeItem(-1);
 		};
 
 		AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton").Pressed += () => {
-			// Filters Taken From 01/13/2024 10:31 PM: https://docs.godotengine.org/en/stable/classes/class_filedialog.html#class-filedialog-property-filters
-			// TODO: More file types.
-			DisplayServer.FileDialogShow("Select creature avatar image...", ".", "", false, DisplayServer.FileDialogMode.OpenFile, new string[] { "*.png ; PNG Images", "*.jpg ; JPG Images" }, new Callable(this, MethodName.AddCreatureImageCallback));
+			OpenFileDialog(nameof(AddCreatureImageCallback));
 		};
-	}
-
-	public void AddCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
-		if (status && selectedPaths.Length > 0) {
-			try {
-				AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(selectedPaths[0]));
-			} catch (Exception) {
-			}
-		}
 	}
 
 	public override void _Process(double delta) {
@@ -172,6 +170,28 @@ public partial class GRollInitiative : Control {
 		EditableDebounce -= delta;
 	}
 
+	public void OpenFileDialog(StringName callbackFunctionStringName) {
+		DisplayServer.FileDialogShow("Select creature avatar image...", defaultCurrentDirectory, "", false, DisplayServer.FileDialogMode.OpenFile, fileDialogFilterStringList.ToArray(), new Callable(this, callbackFunctionStringName));
+	}
+
+	public void AddCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
+		if (status && selectedPaths.Length > 0) {
+			try {
+				AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(selectedPaths[0]));
+			} catch (Exception) {
+			}
+		}
+	}
+
+	public void EditCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
+		if (status && selectedPaths.Length > 0) {
+			try {
+				Tree.GetSelected().SetIcon(0, ImageTexture.CreateFromImage(Image.LoadFromFile(selectedPaths[0])));
+			} catch (Exception) {
+			}
+		}
+	}
+
 	public void RemoveHighlightTreeItem(TreeItem treeItem) {
 		for (int i = 0; i < treeItem.GetTree().Columns; i++) {
 			treeItem.ClearCustomBgColor(i);
@@ -184,7 +204,7 @@ public partial class GRollInitiative : Control {
 		}
 	}
 
-	public void OffsetCurrentTreeItem(int offset) {
+	public void OffsetActiveTreeItem(int offset) {
 		if (offset != 0) {
 			TreeItem nextCreatureTreeItem = null;
 
@@ -193,15 +213,15 @@ public partial class GRollInitiative : Control {
 
 				nextCreatureTreeItem = ActiveCreatureTreeItem;
 				for (int i = 0; i < Math.Abs(offset); i++) {
+					if (nextCreatureTreeItem == null) {
+						break;
+					}
+
 					if (offset > 0) {
 						nextCreatureTreeItem = nextCreatureTreeItem.GetNextInTree();
 					} else {
 						nextCreatureTreeItem = nextCreatureTreeItem.GetPrevInTree();
 					}
-				}
-
-				if (nextCreatureTreeItem == null) {
-					TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY).AsInt32() + Math.Sign(offset));
 				}
 			}
 
@@ -211,13 +231,11 @@ public partial class GRollInitiative : Control {
 				} else {
 					nextCreatureTreeItem = Tree.GetRoot().GetChild(Tree.GetRoot().GetChildCount() - 1);
 				}
+
+				TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY).AsInt32() + Math.Sign(offset));
 			}
 
 			ActiveCreatureTreeItem = nextCreatureTreeItem;
-		}
-
-		if (ActiveCreatureTreeItem != null) {
-			HighlightTreeItem(ActiveCreatureTreeItem);
 		}
 
 		UpdateUI();
@@ -243,6 +261,10 @@ public partial class GRollInitiative : Control {
 					treeItem.MoveBefore(prevTreeItem);
 				}
 			}
+		}
+
+		if (ActiveCreatureTreeItem != null) {
+			HighlightTreeItem(ActiveCreatureTreeItem);
 		}
 
 		TurnCountTextLabel.Text = "Turn " + TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY, 0);
