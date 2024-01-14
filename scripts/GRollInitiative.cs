@@ -30,15 +30,25 @@ public partial class GRollInitiative : Control {
 	public const string TURN_NUMBER_METADATA_KEY = "turn_number";
 
 	// Taken From 01/13/2024 10:31 PM: https://docs.godotengine.org/en/stable/classes/class_filedialog.html#class-filedialog-property-filters
-	public List<string> fileDialogFilterStringList = new List<string>() { "*.png, *.jpg, *.jpeg, *.svg, *.tga, *.webp ; Supported Images" };
-	public string defaultCurrentDirectory = ProjectSettings.GlobalizePath(System.Environment.ExpandEnvironmentVariables("%USERPROFILE%\\Pictures"));
+	public List<string> FileDialogFilterStringList = new List<string>() { "*.png, *.jpg, *.jpeg, *.svg, *.tga, *.webp ; Supported Images" };
+	public string DefaultCurrentDirectory = ProjectSettings.GlobalizePath(System.Environment.ExpandEnvironmentVariables("%USERPROFILE%\\Pictures"));
+
+	public int TreeIconWidthSize = 60;
+	public double PreviousRatio = 0;
 
 	public override void _Ready() {
 		TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, 0);
 
 		Tree.CreateItem();
 		Tree.SetColumnClipContent(0, true);
+		Tree.SetColumnCustomMinimumWidth(0, TreeIconWidthSize);
+
 		Tree.SetColumnClipContent(1, true);
+		Tree.SetColumnCustomMinimumWidth(1, 100);
+		Tree.SetColumnExpand(1, true);
+		Tree.SetColumnExpandRatio(1, 3);
+
+		Tree.SetColumnCustomMinimumWidth(2, 10);
 
 		// Handle visibility toggle.
 		AddCreatureToggleWindowButton.Pressed += () => {
@@ -58,14 +68,16 @@ public partial class GRollInitiative : Control {
 
 			// newItem.SetIcon(0, GD.Load<Texture2D>("res://resources/test_avatar.png"));
 			newItem.SetIcon(0, AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture);
-			newItem.SetIconMaxWidth(0, 60);
+			newItem.SetIconMaxWidth(0, TreeIconWidthSize);
 
 			newItem.SetText(1, AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text);
 			newItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
 			newItem.SetTextOverrunBehavior(1, TextServer.OverrunBehavior.TrimEllipsis);
+			newItem.SetExpandRight(1, true);
 
 			newItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
 			newItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+			newItem.SetExpandRight(2, false);
 
 			UpdateUI();
 		};
@@ -142,16 +154,22 @@ public partial class GRollInitiative : Control {
 		}
 
 		foreach (var child in Tree.GetChildren(includeInternal: true)) {
-			if (child is VScrollBar vScrollBar) {
+			if (child is VScrollBar treeVScrollBar) {
 				// Copy the parameters of the Tree scrollbar to the actual one.
-				VScrollBar.MinValue = vScrollBar.MinValue;
-				VScrollBar.MaxValue = vScrollBar.MaxValue;
-				VScrollBar.Step = vScrollBar.Step;
-				VScrollBar.CustomStep = vScrollBar.CustomStep;
-				VScrollBar.Page = vScrollBar.Page;
+				VScrollBar.MinValue = treeVScrollBar.MinValue;
+				VScrollBar.MaxValue = treeVScrollBar.MaxValue;
+				VScrollBar.Step = treeVScrollBar.Step;
+				VScrollBar.CustomStep = treeVScrollBar.CustomStep;
+				VScrollBar.Page = treeVScrollBar.Page;
 
 				// Copy the ratio from the actual scrollbar to the tree scrollbar.
-				vScrollBar.Ratio = VScrollBar.Ratio;
+				if (PreviousRatio != VScrollBar.Ratio) {
+					treeVScrollBar.Ratio = VScrollBar.Ratio;
+				} else if (PreviousRatio != treeVScrollBar.Ratio) {
+					VScrollBar.Ratio = treeVScrollBar.Ratio;
+				}
+
+				PreviousRatio = VScrollBar.Ratio;
 			}
 		}
 
@@ -171,7 +189,7 @@ public partial class GRollInitiative : Control {
 	}
 
 	public void OpenFileDialog(StringName callbackFunctionStringName) {
-		DisplayServer.FileDialogShow("Select creature avatar image...", defaultCurrentDirectory, "", false, DisplayServer.FileDialogMode.OpenFile, fileDialogFilterStringList.ToArray(), new Callable(this, callbackFunctionStringName));
+		DisplayServer.FileDialogShow("Select creature avatar image...", DefaultCurrentDirectory, "", false, DisplayServer.FileDialogMode.OpenFile, FileDialogFilterStringList.ToArray(), new Callable(this, callbackFunctionStringName));
 	}
 
 	public void AddCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
