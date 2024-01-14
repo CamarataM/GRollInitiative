@@ -37,6 +37,8 @@ public partial class GRollInitiative : Control {
 
 		// Handle visibility toggle.
 		AddCreatureToggleWindowButton.Pressed += () => {
+			AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = GD.Load<Texture2D>("res://resources/test_avatar.png");
+
 			AddCreatureWindow.Visible = !AddCreatureWindow.Visible;
 		};
 
@@ -49,7 +51,8 @@ public partial class GRollInitiative : Control {
 		AddCreatureButton.Pressed += () => {
 			var newItem = Tree.CreateItem();
 
-			newItem.SetIcon(0, GD.Load<Texture2D>("res://resources/test_avatar.png"));
+			// newItem.SetIcon(0, GD.Load<Texture2D>("res://resources/test_avatar.png"));
+			newItem.SetIcon(0, AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture);
 			newItem.SetIconMaxWidth(0, 60);
 
 			newItem.SetText(1, AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text);
@@ -105,6 +108,21 @@ public partial class GRollInitiative : Control {
 		PreviousCreatureButton.Pressed += () => {
 			OffsetCurrentTreeItem(-1);
 		};
+
+		AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton").Pressed += () => {
+			// Filters Taken From 01/13/2024 10:31 PM: https://docs.godotengine.org/en/stable/classes/class_filedialog.html#class-filedialog-property-filters
+			// TODO: More file types.
+			DisplayServer.FileDialogShow("Select creature avatar image...", ".", "", false, DisplayServer.FileDialogMode.OpenFile, new string[] { "*.png ; PNG Images", "*.jpg ; JPG Images" }, new Callable(this, MethodName.AddCreatureImageCallback));
+		};
+	}
+
+	public void AddCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
+		if (status && selectedPaths.Length > 0) {
+			try {
+				AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(selectedPaths[0]));
+			} catch (Exception) {
+			}
+		}
 	}
 
 	public override void _Process(double delta) {

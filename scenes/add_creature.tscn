@@ -43,7 +43,21 @@ layout_mode = 2
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="AvatarImageButton" type="Button" parent="MarginContainer/VBoxContainer/MainHBoxContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+flat = true
+
+[node name="AvatarImage" type="TextureRect" parent="MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton"]
+material = SubResource("ShaderMaterial_0jyl1")
+custom_minimum_size = Vector2(100, 100)
+size_flags_horizontal = 0
+size_flags_vertical = 0
+texture = ExtResource("1_fecn7")
+expand_mode = 2
+
 [node name="AvatarImage" type="TextureRect" parent="MarginContainer/VBoxContainer/MainHBoxContainer"]
+visible = false
 material = SubResource("ShaderMaterial_0jyl1")
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
