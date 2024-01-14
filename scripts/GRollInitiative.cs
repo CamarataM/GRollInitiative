@@ -12,6 +12,8 @@ public partial class GRollInitiative : Control {
 	[Export]
 	public Button AlwaysOnTopToggleButton;
 	[Export]
+	public Button ClearAllCreaturesButton;
+	[Export]
 	public VScrollBar VScrollBar;
 	[Export]
 	public Label TurnCountTextLabel;
@@ -22,6 +24,7 @@ public partial class GRollInitiative : Control {
 	public Button PreviousCreatureButton;
 
 	public Button AddCreatureButton;
+	public ConfirmationDialog ClearAllCreaturesConfirmationDialog;
 
 	public TreeItem ActiveCreatureTreeItem = null;
 
@@ -33,7 +36,7 @@ public partial class GRollInitiative : Control {
 
 	// Taken From 01/13/2024 10:31 PM: https://docs.godotengine.org/en/stable/classes/class_filedialog.html#class-filedialog-property-filters
 	public List<string> FileDialogFilterStringList = new List<string>() { "*.png, *.jpg, *.jpeg, *.svg, *.tga, *.webp ; Supported Images" };
-	public string DefaultCurrentDirectory = ProjectSettings.GlobalizePath(System.Environment.ExpandEnvironmentVariables("%USERPROFILE%\\Pictures"));
+	public string DefaultCurrentDirectory = ProjectSettings.GlobalizePath(OS.GetSystemDir(OS.SystemDir.Pictures));
 
 	public int TreeIconWidthSize = 60;
 	public double PreviousRatio = 0;
@@ -148,6 +151,25 @@ public partial class GRollInitiative : Control {
 				AddCreatureWindow.AlwaysOnTop = false;
 				AddCreatureWindow.Transient = true;
 			}
+		};
+
+		ClearAllCreaturesButton.Pressed += () => {
+			if (ClearAllCreaturesConfirmationDialog == null) {
+				ClearAllCreaturesConfirmationDialog = new ConfirmationDialog();
+
+				AddChild(ClearAllCreaturesConfirmationDialog);
+
+				ClearAllCreaturesConfirmationDialog.Confirmed += () => {
+					foreach (var child in Tree.GetRoot().GetChildren()) {
+						Tree.GetRoot().RemoveChild(child);
+					}
+				};
+			}
+
+			ClearAllCreaturesConfirmationDialog.Position = (Vector2I) (this.GetWindow().GetPositionWithDecorations() + (this.GetWindow().GetSizeWithDecorations() * new Vector2(0.5f, 0.5f) - (ClearAllCreaturesConfirmationDialog.GetSizeWithDecorations() * new Vector2(0.5f, 0.5f))));
+			ClearAllCreaturesConfirmationDialog.Visible = true;
+
+			ClearAllCreaturesConfirmationDialog.DialogText = "Do you want to clear all " + Tree.GetRoot().GetChildCount() + " creatures?";
 		};
 
 		// TODO: Implement clear button with confirmation prompt.
