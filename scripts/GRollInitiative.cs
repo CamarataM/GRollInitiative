@@ -1,4 +1,5 @@
 using Godot;
+using System;
 
 public partial class GRollInitiative : Control {
 	[Export]
@@ -39,6 +40,8 @@ public partial class GRollInitiative : Control {
 			newItem.SetText(1, AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text);
 			newItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
 			newItem.SetText(2, "" + AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+
+			RefreshItems();
 		};
 
 		Tree.GuiInput += (InputEvent inputEvent) => {
@@ -48,6 +51,7 @@ public partial class GRollInitiative : Control {
 
 					if (selectedItem != null) {
 						selectedItem.GetParent().RemoveChild(selectedItem);
+						RefreshItems();
 					}
 				}
 			}
@@ -55,12 +59,20 @@ public partial class GRollInitiative : Control {
 			// TODO: This is currently bugged and not fully functional.
 			if (inputEvent is InputEventMouseButton inputEventMouseButton) {
 				if (EditableDebounce <= 0 && inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left) {
+					MakeEditableTreeItem = Tree.GetItemAtPosition(inputEventMouseButton.GlobalPosition);
+
+					if (EditableCooldown > 0 && Tree.GetColumnAtPosition(inputEventMouseButton.GlobalPosition) == 0) {
+						GD.Print("TODO: Open image selector.");
+					}
+
 					EditableCooldown = 0.5;
 					EditableDebounce = 0.1;
-
-					MakeEditableTreeItem = Tree.GetItemAtPosition(inputEventMouseButton.GlobalPosition);
 				}
 			}
+		};
+
+		Tree.ItemEdited += () => {
+			RefreshItems();
 		};
 	}
 
@@ -112,5 +124,22 @@ public partial class GRollInitiative : Control {
 
 		EditableCooldown -= delta;
 		EditableDebounce -= delta;
+	}
+
+	public void RefreshItems() {
+		foreach (var treeItem in Tree.GetRoot().GetChildren()) {
+			for (int i = 0; i < treeItem.GetParent().GetChildCount(); i++) {
+				var prevTreeItem = treeItem.GetPrevInTree();
+
+				if (prevTreeItem == null || prevTreeItem == treeItem) {
+					break;
+				}
+
+				// TODO: Switch to meta parsing for sorting order.
+				if (Int32.Parse(treeItem.GetText(2)) > Int32.Parse(treeItem.GetPrevInTree().GetText(2))) {
+					treeItem.MoveBefore(prevTreeItem);
+				}
+			}
+		}
 	}
 }

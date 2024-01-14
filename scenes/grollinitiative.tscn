@@ -61,7 +61,6 @@ theme = SubResource("Theme_12dsh")
 columns = 3
 hide_folding = true
 hide_root = true
-drop_mode_flags = 2
 scroll_horizontal_enabled = false
 scroll_vertical_enabled = false
 
