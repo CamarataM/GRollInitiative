@@ -73,10 +73,12 @@ layout_mode = 2
 
 [node name="AddCreatureToggleWindowButton" type="Button" parent="MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer"]
 layout_mode = 2
+tooltip_text = "Add Creature"
 text = "+"
 
 [node name="AlwaysOnTopToggleButton" type="Button" parent="MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer"]
 layout_mode = 2
+tooltip_text = "Toggle Always on Top"
 toggle_mode = true
 text = "^"
 

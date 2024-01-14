@@ -160,6 +160,8 @@ public partial class GRollInitiative : Control {
 
 		// TODO: Implement distinct team colors functionality for active color.
 		// 		 - Allow for custom colors to be set with default colors of green, red, etc (easy, use ColorPicker).
+
+		// TODO: Support avatar setting via drag-and-drop.
 	}
 
 	public override void _Process(double delta) {

@@ -51,6 +51,7 @@ flat = true
 [node name="AvatarImage" type="TextureRect" parent="MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton"]
 material = SubResource("ShaderMaterial_0jyl1")
 custom_minimum_size = Vector2(100, 100)
+layout_mode = 0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 texture = ExtResource("1_fecn7")
