@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://c5w4nbknq64pp"]
+[gd_scene load_steps=10 format=3 uid="uid://c5w4nbknq64pp"]
 
 [ext_resource type="Script" path="res://scripts/GRollInitiative.cs" id="1_sr7j6"]
 [ext_resource type="PackedScene" uid="uid://cqs8cwer11tn1" path="res://scenes/add_creature.tscn" id="2_c8pud"]
@@ -20,7 +20,10 @@ VScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_h8poj")
 VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_5haku")
 VScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_4hntr")
 
-[node name="grollinitiative" type="Control" node_paths=PackedStringArray("Tree", "AddCreatureWindow", "AddCreatureToggleWindowButton", "VScrollBar")]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jxr6h"]
+bg_color = Color(0.227451, 0.709804, 0.356863, 0.290196)
+
+[node name="grollinitiative" type="Control" node_paths=PackedStringArray("Tree", "AddCreatureWindow", "AddCreatureToggleWindowButton", "VScrollBar", "TurnCountTextLabel", "ActiveCreaturePanel", "NextCreatureButton", "PreviousCreatureButton")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -32,6 +35,10 @@ Tree = NodePath("MainVBoxContainer/TreeHBoxContainer/Tree")
 AddCreatureWindow = NodePath("add_creature")
 AddCreatureToggleWindowButton = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/AddCreatureToggleWindowButton")
 VScrollBar = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/CreatureTreeVScrollBar")
+TurnCountTextLabel = NodePath("MainVBoxContainer/CreatureVBoxContainer/TurnCountLabel")
+ActiveCreaturePanel = NodePath("ActiveCreaturePanel")
+NextCreatureButton = NodePath("MainVBoxContainer/CreatureVBoxContainer/TurnControlHBoxContainer/NextTurnButton")
+PreviousCreatureButton = NodePath("MainVBoxContainer/CreatureVBoxContainer/TurnControlHBoxContainer/PreviousTurnButton")
 
 [node name="BackgroundPanel" type="Panel" parent="."]
 layout_mode = 1
@@ -97,6 +104,13 @@ text = "Previous"
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Next"
+
+[node name="ActiveCreaturePanel" type="Panel" parent="."]
+visible = false
+layout_mode = 0
+offset_right = 307.0
+offset_bottom = 75.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_jxr6h")
 
 [node name="add_creature" parent="." instance=ExtResource("2_c8pud")]
 visible = false

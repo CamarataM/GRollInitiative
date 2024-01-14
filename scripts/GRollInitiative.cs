@@ -10,13 +10,27 @@ public partial class GRollInitiative : Control {
 	public Button AddCreatureToggleWindowButton;
 	[Export]
 	public VScrollBar VScrollBar;
+	[Export]
+	public Label TurnCountTextLabel;
+
+	[Export]
+	public Button NextCreatureButton;
+	[Export]
+	public Button PreviousCreatureButton;
 
 	public Button AddCreatureButton;
+
+	public TreeItem ActiveCreatureTreeItem = null;
 
 	public TreeItem MakeEditableTreeItem = null;
 	public double EditableCooldown = 0;
 	public double EditableDebounce = 0;
+
+	public const string TURN_NUMBER_METADATA_KEY = "turn_number";
+
 	public override void _Ready() {
+		TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, 0);
+
 		Tree.CreateItem();
 		Tree.SetColumnClipContent(0, true);
 		Tree.SetColumnClipContent(1, true);
@@ -45,7 +59,7 @@ public partial class GRollInitiative : Control {
 			newItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
 			newItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
 
-			RefreshItems();
+			UpdateUI();
 		};
 
 		Tree.GuiInput += (InputEvent inputEvent) => {
@@ -55,7 +69,7 @@ public partial class GRollInitiative : Control {
 
 					if (selectedItem != null) {
 						selectedItem.GetParent().RemoveChild(selectedItem);
-						RefreshItems();
+						UpdateUI();
 					}
 				}
 			}
@@ -63,20 +77,33 @@ public partial class GRollInitiative : Control {
 			// TODO: This is currently bugged and not fully functional.
 			if (inputEvent is InputEventMouseButton inputEventMouseButton) {
 				if (EditableDebounce <= 0 && inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left) {
-					MakeEditableTreeItem = Tree.GetItemAtPosition(inputEventMouseButton.GlobalPosition);
+					var treeItem = Tree.GetItemAtPosition(inputEventMouseButton.GlobalPosition);
 
-					if (EditableCooldown > 0 && Tree.GetColumnAtPosition(inputEventMouseButton.GlobalPosition) == 0) {
-						GD.Print("TODO: Open image selector.");
+					if (treeItem != null) {
+						treeItem.CallDeferred(TreeItem.MethodName.SetEditable, 1, true);
+						treeItem.CallDeferred(TreeItem.MethodName.SetEditable, 2, true);
+
+						if (EditableCooldown > 0 && Tree.GetColumnAtPosition(inputEventMouseButton.GlobalPosition) == 0) {
+							GD.Print("TODO: Open image selector.");
+						}
+
+						EditableCooldown = 0.5;
+						EditableDebounce = 0.1;
 					}
-
-					EditableCooldown = 0.5;
-					EditableDebounce = 0.1;
 				}
 			}
 		};
 
 		Tree.ItemEdited += () => {
-			RefreshItems();
+			UpdateUI();
+		};
+
+		NextCreatureButton.Pressed += () => {
+			OffsetCurrentTreeItem(1);
+		};
+
+		PreviousCreatureButton.Pressed += () => {
+			OffsetCurrentTreeItem(-1);
 		};
 	}
 
@@ -112,13 +139,6 @@ public partial class GRollInitiative : Control {
 			}
 		}
 
-		if (MakeEditableTreeItem != null) {
-			MakeEditableTreeItem.SetEditable(1, true);
-			MakeEditableTreeItem.SetEditable(2, true);
-
-			MakeEditableTreeItem = null;
-		}
-
 		if (EditableCooldown <= 0) {
 			foreach (var treeItem in Tree.GetRoot().GetChildren()) {
 				treeItem.SetEditable(1, false);
@@ -134,7 +154,55 @@ public partial class GRollInitiative : Control {
 		EditableDebounce -= delta;
 	}
 
-	public void RefreshItems() {
+	public void RemoveHighlightTreeItem(TreeItem treeItem) {
+		for (int i = 0; i < treeItem.GetTree().Columns; i++) {
+			treeItem.ClearCustomBgColor(i);
+		}
+	}
+
+	public void HighlightTreeItem(TreeItem treeItem) {
+		for (int i = 0; i < treeItem.GetTree().Columns; i++) {
+			treeItem.SetCustomBgColor(i, new Color(0, 1, 0, 0.5f));
+		}
+	}
+
+	public void OffsetCurrentTreeItem(int offset) {
+		if (offset != 0) {
+			TreeItem nextCreatureTreeItem = null;
+
+			if (ActiveCreatureTreeItem != null) {
+				RemoveHighlightTreeItem(ActiveCreatureTreeItem);
+
+				for (int i = 0; i < Math.Abs(offset); i++) {
+					if (offset > 0) {
+						nextCreatureTreeItem = ActiveCreatureTreeItem.GetNextInTree();
+					} else {
+						nextCreatureTreeItem = ActiveCreatureTreeItem.GetPrevInTree();
+					}
+				}
+
+				if (nextCreatureTreeItem == null) {
+					TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY).AsInt32() + Math.Sign(offset));
+				}
+			}
+
+			if (nextCreatureTreeItem == null) {
+				if (offset > 0) {
+					nextCreatureTreeItem = Tree.GetRoot().GetChild(0);
+				} else {
+					nextCreatureTreeItem = Tree.GetRoot().GetChild(Tree.GetRoot().GetChildCount() - 1);
+				}
+			}
+
+			ActiveCreatureTreeItem = nextCreatureTreeItem;
+		}
+
+		HighlightTreeItem(ActiveCreatureTreeItem);
+
+		UpdateUI();
+	}
+
+	public void UpdateUI() {
 		foreach (var treeItem in Tree.GetRoot().GetChildren()) {
 			// Set the current metadata value from the text value. If the value cannot be parsed, set the text to the previous metadata value.
 			if (double.TryParse(treeItem.GetText(2), out double parsedValue)) {
@@ -155,5 +223,7 @@ public partial class GRollInitiative : Control {
 				}
 			}
 		}
+
+		TurnCountTextLabel.Text = "Turn " + TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY, 0);
 	}
 }
