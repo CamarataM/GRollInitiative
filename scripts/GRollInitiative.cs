@@ -19,6 +19,7 @@ public partial class GRollInitiative : Control {
 	public override void _Ready() {
 		Tree.CreateItem();
 		Tree.SetColumnClipContent(0, true);
+		Tree.SetColumnClipContent(1, true);
 
 		// Handle visibility toggle.
 		AddCreatureToggleWindowButton.Pressed += () => {
@@ -39,7 +40,10 @@ public partial class GRollInitiative : Control {
 
 			newItem.SetText(1, AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text);
 			newItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
-			newItem.SetText(2, "" + AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+			newItem.SetTextOverrunBehavior(1, TextServer.OverrunBehavior.TrimEllipsis);
+
+			newItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
+			newItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
 
 			RefreshItems();
 		};
@@ -118,6 +122,10 @@ public partial class GRollInitiative : Control {
 		if (EditableCooldown <= 0) {
 			foreach (var treeItem in Tree.GetRoot().GetChildren()) {
 				treeItem.SetEditable(1, false);
+				// This is needed to ensure that the word's autowrap correctly if they are changed.
+				treeItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
+				treeItem.SetTextOverrunBehavior(1, TextServer.OverrunBehavior.TrimEllipsis);
+
 				treeItem.SetEditable(2, false);
 			}
 		}
@@ -128,6 +136,13 @@ public partial class GRollInitiative : Control {
 
 	public void RefreshItems() {
 		foreach (var treeItem in Tree.GetRoot().GetChildren()) {
+			// Set the current metadata value from the text value. If the value cannot be parsed, set the text to the previous metadata value.
+			if (double.TryParse(treeItem.GetText(2), out double parsedValue)) {
+				treeItem.SetMetadata(2, parsedValue);
+			} else {
+				treeItem.SetText(2, treeItem.GetMetadata(2).ToString());
+			}
+
 			for (int i = 0; i < treeItem.GetParent().GetChildCount(); i++) {
 				var prevTreeItem = treeItem.GetPrevInTree();
 
@@ -135,8 +150,7 @@ public partial class GRollInitiative : Control {
 					break;
 				}
 
-				// TODO: Switch to meta parsing for sorting order.
-				if (Int32.Parse(treeItem.GetText(2)) > Int32.Parse(treeItem.GetPrevInTree().GetText(2))) {
+				if ((double) treeItem.GetMetadata(2) > (double) prevTreeItem.GetMetadata(2)) {
 					treeItem.MoveBefore(prevTreeItem);
 				}
 			}
