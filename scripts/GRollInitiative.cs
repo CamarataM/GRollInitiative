@@ -188,6 +188,16 @@ public partial class GRollInitiative : Control {
 		};
 
 		TeamColorPickerButton = AddCreatureWindow.GetNode<ColorPickerButton>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer/ColorPickerButton");
+		TeamColorPickerButton.Color = new Color(0, 1f, 0, 0.5f);
+		TeamColorPickerButton.GetPicker().AddPreset(new Color(0, 1f, 0, 0.5f));
+		TeamColorPickerButton.GetPicker().AddPreset(new Color(1f, 0, 0, 0.5f));
+		TeamColorPickerButton.GetPicker().AddPreset(new Color(0, 0f, 1f, 0.5f));
+		TeamColorPickerButton.GetPicker().PresetsVisible = true;
+
+		TeamColorPickerButton.VisibilityChanged += () => {
+			// TODO: Doesn't seem to work as expected, which would be showing the presets on visibility change. Also doesn't work in process, so it might be bugged / only control showing the swatch button rather than actually opening the swatches?
+			TeamColorPickerButton.GetPicker().Set(ColorPicker.PropertyName.PresetsVisible, true);
+		};
 
 		AlwaysOnTopToggleButton.Toggled += (bool toggled) => {
 			this.GetWindow().AlwaysOnTop = toggled;
