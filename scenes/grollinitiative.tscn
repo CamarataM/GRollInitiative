@@ -20,7 +20,7 @@ VScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_h8poj")
 VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_5haku")
 VScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_4hntr")
 
-[node name="grollinitiative" type="Control" node_paths=PackedStringArray("Tree", "AddCreatureWindow", "AddCreatureToggleWindowButton", "VScrollBar", "TurnCountTextLabel", "NextCreatureButton", "PreviousCreatureButton")]
+[node name="grollinitiative" type="Control" node_paths=PackedStringArray("Tree", "AddCreatureWindow", "AddCreatureToggleWindowButton", "AlwaysOnTopToggleButton", "VScrollBar", "TurnCountTextLabel", "NextCreatureButton", "PreviousCreatureButton")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,6 +31,7 @@ script = ExtResource("1_sr7j6")
 Tree = NodePath("MainVBoxContainer/TreeHBoxContainer/Tree")
 AddCreatureWindow = NodePath("add_creature")
 AddCreatureToggleWindowButton = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/AddCreatureToggleWindowButton")
+AlwaysOnTopToggleButton = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/AlwaysOnTopToggleButton")
 VScrollBar = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/CreatureTreeVScrollBar")
 TurnCountTextLabel = NodePath("MainVBoxContainer/CreatureVBoxContainer/TurnCountLabel")
 NextCreatureButton = NodePath("MainVBoxContainer/CreatureVBoxContainer/TurnControlHBoxContainer/NextTurnButton")
@@ -73,6 +74,11 @@ layout_mode = 2
 [node name="AddCreatureToggleWindowButton" type="Button" parent="MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer"]
 layout_mode = 2
 text = "+"
+
+[node name="AlwaysOnTopToggleButton" type="Button" parent="MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer"]
+layout_mode = 2
+toggle_mode = true
+text = "^"
 
 [node name="CreatureTreeVScrollBar" type="VScrollBar" parent="MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer"]
 layout_mode = 2

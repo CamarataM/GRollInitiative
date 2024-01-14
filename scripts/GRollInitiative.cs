@@ -10,6 +10,8 @@ public partial class GRollInitiative : Control {
 	[Export]
 	public Button AddCreatureToggleWindowButton;
 	[Export]
+	public Button AlwaysOnTopToggleButton;
+	[Export]
 	public VScrollBar VScrollBar;
 	[Export]
 	public Label TurnCountTextLabel;
@@ -133,6 +135,19 @@ public partial class GRollInitiative : Control {
 		AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton").Pressed += () => {
 			OpenFileDialog(nameof(AddCreatureImageCallback));
 		};
+
+		AlwaysOnTopToggleButton.Toggled += (bool toggled) => {
+			this.GetWindow().AlwaysOnTop = toggled;
+
+			// Transient windows cannot be always-on-top (and vice-versa), so we need to toggle that off in the correct order to avoid an error.
+			if (toggled) {
+				AddCreatureWindow.Transient = false;
+				AddCreatureWindow.AlwaysOnTop = true;
+			} else {
+				AddCreatureWindow.AlwaysOnTop = false;
+				AddCreatureWindow.Transient = true;
+			}
+		};
 	}
 
 	public override void _Process(double delta) {
@@ -189,10 +204,12 @@ public partial class GRollInitiative : Control {
 	}
 
 	public void OpenFileDialog(StringName callbackFunctionStringName) {
+		// TODO: Save previous valid path and open to that one instead of default.
 		DisplayServer.FileDialogShow("Select creature avatar image...", DefaultCurrentDirectory, "", false, DisplayServer.FileDialogMode.OpenFile, FileDialogFilterStringList.ToArray(), new Callable(this, callbackFunctionStringName));
 	}
 
 	public void AddCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
+		// TODO: Better validity checks.
 		if (status && selectedPaths.Length > 0) {
 			try {
 				AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(selectedPaths[0]));
