@@ -25,6 +25,7 @@ public partial class GRollInitiative : Control {
 
 	public Button AddCreatureButton;
 	public ConfirmationDialog ClearAllCreaturesConfirmationDialog;
+	public ColorPickerButton TeamColorPickerButton;
 
 	public TreeItem ActiveCreatureTreeItem = null;
 
@@ -32,6 +33,7 @@ public partial class GRollInitiative : Control {
 	public double EditableDebounce = 0;
 
 	public const string TURN_NUMBER_METADATA_KEY = "turn_number";
+	public const string ACTIVE_COLOR_METADATA_KEY = "active_color";
 
 	// Taken From 01/13/2024 10:31 PM: https://docs.godotengine.org/en/stable/classes/class_filedialog.html#class-filedialog-property-filters
 	public List<string> FileDialogFilterStringList = new List<string>() { "*.png, *.jpg, *.jpeg, *.svg, *.tga, *.webp ; Supported Images" };
@@ -114,6 +116,8 @@ public partial class GRollInitiative : Control {
 			newItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
 			newItem.SetExpandRight(2, false);
 
+			newItem.SetMeta(ACTIVE_COLOR_METADATA_KEY, TeamColorPickerButton.Color);
+
 			UpdateUI();
 		};
 
@@ -183,6 +187,8 @@ public partial class GRollInitiative : Control {
 			OpenFileDialog(nameof(AddCreatureImageCallback));
 		};
 
+		TeamColorPickerButton = AddCreatureWindow.GetNode<ColorPickerButton>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer/ColorPickerButton");
+
 		AlwaysOnTopToggleButton.Toggled += (bool toggled) => {
 			this.GetWindow().AlwaysOnTop = toggled;
 
@@ -223,6 +229,9 @@ public partial class GRollInitiative : Control {
 
 		// TODO: Implement distinct team colors functionality for active color.
 		// 		 - Allow for custom colors to be set with default colors of green, red, etc (easy, use ColorPicker).
+
+		// TODO: Make double clicking populate the Add New window rather than directly modifying the tree item.
+		//		 - This has a few key benefits, the primary one being we can have the checking logic all in one place and means we don't have to duplicate the color code when we implement that.
 	}
 
 	public override void _Process(double delta) {
@@ -333,7 +342,7 @@ public partial class GRollInitiative : Control {
 
 	public void HighlightTreeItem(TreeItem treeItem) {
 		for (int i = 0; i < treeItem.GetTree().Columns; i++) {
-			treeItem.SetCustomBgColor(i, new Color(0, 1, 0, 0.5f));
+			treeItem.SetCustomBgColor(i, (Color) treeItem.GetMeta(ACTIVE_COLOR_METADATA_KEY));
 		}
 	}
 
