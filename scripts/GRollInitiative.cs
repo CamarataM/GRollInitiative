@@ -28,7 +28,6 @@ public partial class GRollInitiative : Control {
 
 	public TreeItem ActiveCreatureTreeItem = null;
 
-	public TreeItem MakeEditableTreeItem = null;
 	public double EditableCooldown = 0;
 	public double EditableDebounce = 0;
 
@@ -89,22 +88,35 @@ public partial class GRollInitiative : Control {
 
 		Tree.GuiInput += (InputEvent inputEvent) => {
 			if (inputEvent is InputEventKey inputEventKey) {
-				// TODO: Implement select all and multi-delete (Tree.GetNextSelected).
 				if (inputEventKey.Pressed && inputEventKey.Keycode == Key.Delete) {
-					var selectedItem = Tree.GetSelected();
+					int treeChildCount = Tree.GetRoot().GetChildCount();
+					for (int i = 0; i < treeChildCount; i++) {
+						var selectedItem = Tree.GetNextSelected(null);
 
-					if (selectedItem != null) {
-						if (selectedItem == ActiveCreatureTreeItem) {
-							ActiveCreatureTreeItem = selectedItem.GetPrevInTree();
+						if (selectedItem != null) {
+							if (selectedItem == ActiveCreatureTreeItem) {
+								ActiveCreatureTreeItem = selectedItem.GetPrevInTree();
+							}
+
+							selectedItem.GetParent().RemoveChild(selectedItem);
+						} else {
+							break;
 						}
+					}
 
-						selectedItem.GetParent().RemoveChild(selectedItem);
-						UpdateUI();
+					UpdateUI();
+				}
+
+				if (inputEventKey.Pressed && inputEventKey.CtrlPressed && inputEventKey.Keycode == Key.A) {
+					foreach (var child in Tree.GetRoot().GetChildren()) {
+						for (int i = 0; i < child.GetTree().Columns; i++) {
+							child.Select(i);
+						}
 					}
 				}
 			}
 
-			// TODO: This is currently bugged and not fully functional (will sometimes fire on a single click).
+			// TODO: This is currently bugged and not fully functional (will sometimes fire on a single click, can click one item then another and have it activate).
 			if (inputEvent is InputEventMouseButton inputEventMouseButton) {
 				if (EditableDebounce <= 0 && inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left) {
 					var treeItem = Tree.GetItemAtPosition(inputEventMouseButton.GlobalPosition);
@@ -117,7 +129,7 @@ public partial class GRollInitiative : Control {
 							OpenFileDialog(nameof(EditCreatureImageCallback));
 						}
 
-						EditableCooldown = 0.5;
+						EditableCooldown = 0.2;
 						EditableDebounce = 0.1;
 					}
 				}
@@ -171,8 +183,6 @@ public partial class GRollInitiative : Control {
 
 			ClearAllCreaturesConfirmationDialog.DialogText = "Do you want to clear all " + Tree.GetRoot().GetChildCount() + " creatures?";
 		};
-
-		// TODO: Implement clear button with confirmation prompt.
 
 		// TODO: Implement gallery feature, which allows for entries to be saved and used later.
 		// 		 - Will need to have method to convert name-image pairs to file (easy).
