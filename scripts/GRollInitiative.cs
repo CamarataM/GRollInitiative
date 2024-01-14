@@ -68,6 +68,35 @@ public partial class GRollInitiative : Control {
 			AddCreatureWindow.Visible = false;
 		};
 
+		foreach (var window in new Window[] { this.GetWindow(), AddCreatureWindow }) {
+			window.FilesDropped += (string[] files) => {
+				foreach (var filePath in files) {
+					if (System.IO.File.Exists(filePath)) {
+						if (AddCreatureWindow.Visible) {
+							AddCreatureImageCallback(true, new string[] { filePath }, 0);
+						} else {
+							// For drag and drop, it doesn't make much sense to have it use the selected by default.
+							// TreeItem treeItemOverride = Tree.GetSelected();
+
+							TreeItem treeItemOverride = null;
+
+							if (treeItemOverride == null) {
+								treeItemOverride = Tree.GetItemAtPosition(GetViewport().GetMousePosition());
+							}
+
+							if (treeItemOverride == null) {
+								treeItemOverride = Tree.GetSelected();
+							}
+
+							EditCreatureImage(true, new string[] { filePath }, 0, treeItemOverride);
+						}
+					} else {
+						GD.PrintErr("Detected drag-drop with invalid file '" + filePath + "'");
+					}
+				}
+			};
+		}
+
 		AddCreatureButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/AddButton");
 		AddCreatureButton.Pressed += () => {
 			var newItem = Tree.CreateItem();
@@ -194,8 +223,6 @@ public partial class GRollInitiative : Control {
 
 		// TODO: Implement distinct team colors functionality for active color.
 		// 		 - Allow for custom colors to be set with default colors of green, red, etc (easy, use ColorPicker).
-
-		// TODO: Support avatar setting via drag-and-drop.
 	}
 
 	public override void _Process(double delta) {
@@ -257,6 +284,7 @@ public partial class GRollInitiative : Control {
 
 	public void AddCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
 		if (status && selectedPaths.Length > 0) {
+			// TODO: Log on error.
 			try {
 				var path = selectedPaths[0];
 
@@ -270,13 +298,25 @@ public partial class GRollInitiative : Control {
 		}
 	}
 
+	// This is necessary due to the callback parameters (even optional ones) needing to be exactly as expected.
 	public void EditCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
+		EditCreatureImage(status: status, selectedPaths: selectedPaths, selectedFilterIndex: selectedFilterIndex);
+	}
+
+	public void EditCreatureImage(bool status, string[] selectedPaths, int selectedFilterIndex, TreeItem treeItemOverride = null) {
 		if (status && selectedPaths.Length > 0) {
+			// TODO: Log on error.
 			try {
 				var path = selectedPaths[0];
 
 				if (System.IO.File.Exists(path)) {
-					Tree.GetSelected().SetIcon(0, ImageTexture.CreateFromImage(Image.LoadFromFile(path)));
+					if (treeItemOverride == null) {
+						treeItemOverride = Tree.GetSelected();
+					}
+
+					if (treeItemOverride != null) {
+						treeItemOverride.SetIcon(0, ImageTexture.CreateFromImage(Image.LoadFromFile(path)));
+					}
 
 					CurrentDirectory = path;
 				}
