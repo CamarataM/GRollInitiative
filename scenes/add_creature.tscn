@@ -1,7 +1,18 @@
-[gd_scene format=3 uid="uid://cqs8cwer11tn1"]
+[gd_scene load_steps=4 format=3 uid="uid://cqs8cwer11tn1"]
+
+[ext_resource type="Texture2D" uid="uid://yiyhsmkoooyf" path="res://resources/test_avatar.png" id="1_fecn7"]
+[ext_resource type="Shader" path="res://resources/corner_radius.gdshader" id="1_lyh16"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0jyl1"]
+shader = ExtResource("1_lyh16")
+shader_parameter/corner_scale = 1.0
 
 [node name="add_creature" type="Window"]
-size = Vector2i(330, 200)
+position = Vector2i(0, 36)
+size = Vector2i(330, 150)
+transient = true
+exclusive = true
+unresizable = true
 
 [node name="BackgroundPanel" type="Panel" parent="."]
 anchors_preset = 15
@@ -12,6 +23,47 @@ grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="TextureRect" type="TextureRect" parent="."]
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="MainHBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AvatarImage" type="TextureRect" parent="MarginContainer/VBoxContainer/MainHBoxContainer"]
+material = SubResource("ShaderMaterial_0jyl1")
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+texture = ExtResource("1_fecn7")
+expand_mode = 2
+
+[node name="SettingsVBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MainHBoxContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameLineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer"]
+layout_mode = 2
+placeholder_text = "Name"
+
+[node name="InitiativeSpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer"]
+layout_mode = 2
+
+[node name="AddButton" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Add"

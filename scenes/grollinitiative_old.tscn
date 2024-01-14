@@ -1,0 +1,98 @@
+[gd_scene load_steps=9 format=3 uid="uid://uoa3ybwyg3o1"]
+
+[ext_resource type="Script" path="res://scripts/GRollInitiative.cs" id="1_onjl8"]
+[ext_resource type="PackedScene" uid="uid://cqs8cwer11tn1" path="res://scenes/add_creature.tscn" id="2_0vqtm"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bbf1y"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_kq2e3"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_h8poj"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5haku"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_4hntr"]
+
+[sub_resource type="Theme" id="Theme_12dsh"]
+VScrollBar/styles/grabber = SubResource("StyleBoxEmpty_bbf1y")
+VScrollBar/styles/grabber_highlight = SubResource("StyleBoxEmpty_kq2e3")
+VScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_h8poj")
+VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_5haku")
+VScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_4hntr")
+
+[node name="grollinitiative" type="Control" node_paths=PackedStringArray("Tree", "AddCreatureWindow", "AddCreatureToggleWindowButton", "ScrollBar")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_onjl8")
+Tree = NodePath("MainHBoxContainer/CreatureVBoxContainer/Tree")
+AddCreatureWindow = NodePath("add_creature")
+AddCreatureToggleWindowButton = NodePath("MainHBoxContainer/ScrollVBoxContainer/AddCreatureToggleWindowButton")
+ScrollBar = NodePath("MainHBoxContainer/ScrollVBoxContainer/CreatureTreeVScrollBar")
+
+[node name="BackgroundPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainHBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CreatureVBoxContainer" type="VBoxContainer" parent="MainHBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Tree" type="Tree" parent="MainHBoxContainer/CreatureVBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme = SubResource("Theme_12dsh")
+columns = 3
+hide_folding = true
+hide_root = true
+drop_mode_flags = 2
+scroll_horizontal_enabled = false
+scroll_vertical_enabled = false
+
+[node name="TurnCountLabel" type="Label" parent="MainHBoxContainer/CreatureVBoxContainer"]
+layout_mode = 2
+text = "Turn X"
+horizontal_alignment = 1
+
+[node name="TurnControlHBoxContainer" type="HBoxContainer" parent="MainHBoxContainer/CreatureVBoxContainer"]
+layout_mode = 2
+
+[node name="PreviousTurnButton" type="Button" parent="MainHBoxContainer/CreatureVBoxContainer/TurnControlHBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Previous"
+
+[node name="NextTurnButton" type="Button" parent="MainHBoxContainer/CreatureVBoxContainer/TurnControlHBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Next"
+
+[node name="ScrollVBoxContainer" type="VBoxContainer" parent="MainHBoxContainer"]
+layout_mode = 2
+
+[node name="AddCreatureToggleWindowButton" type="Button" parent="MainHBoxContainer/ScrollVBoxContainer"]
+layout_mode = 2
+text = "+"
+
+[node name="CreatureTreeVScrollBar" type="VScrollBar" parent="MainHBoxContainer/ScrollVBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 1
+size_flags_vertical = 3
+
+[node name="add_creature" parent="." instance=ExtResource("2_0vqtm")]
+visible = false
