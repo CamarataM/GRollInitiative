@@ -35,7 +35,9 @@ public partial class GRollInitiative : Control {
 
 	// Taken From 01/13/2024 10:31 PM: https://docs.godotengine.org/en/stable/classes/class_filedialog.html#class-filedialog-property-filters
 	public List<string> FileDialogFilterStringList = new List<string>() { "*.png, *.jpg, *.jpeg, *.svg, *.tga, *.webp ; Supported Images" };
-	public string DefaultCurrentDirectory = ProjectSettings.GlobalizePath(OS.GetSystemDir(OS.SystemDir.Pictures));
+
+	public static readonly string DefaultCurrentDirectory = ProjectSettings.GlobalizePath(OS.GetSystemDir(OS.SystemDir.Pictures));
+	public string CurrentDirectory = DefaultCurrentDirectory;
 
 	public int TreeIconWidthSize = 60;
 	public double PreviousRatio = 0;
@@ -250,25 +252,34 @@ public partial class GRollInitiative : Control {
 	}
 
 	public void OpenFileDialog(StringName callbackFunctionStringName) {
-		// TODO: Save previous valid path and open to that one instead of default.
-		DisplayServer.FileDialogShow("Select creature avatar image...", DefaultCurrentDirectory, "", false, DisplayServer.FileDialogMode.OpenFile, FileDialogFilterStringList.ToArray(), new Callable(this, callbackFunctionStringName));
+		DisplayServer.FileDialogShow("Select creature avatar image...", CurrentDirectory, "", false, DisplayServer.FileDialogMode.OpenFile, FileDialogFilterStringList.ToArray(), new Callable(this, callbackFunctionStringName));
 	}
 
 	public void AddCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
-		// TODO: Better validity checks for paths.
 		if (status && selectedPaths.Length > 0) {
 			try {
-				AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(selectedPaths[0]));
+				var path = selectedPaths[0];
+
+				if (System.IO.File.Exists(path)) {
+					AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(path));
+
+					CurrentDirectory = path;
+				}
 			} catch (Exception) {
 			}
 		}
 	}
 
 	public void EditCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
-		// TODO: Better validity checks for paths.
 		if (status && selectedPaths.Length > 0) {
 			try {
-				Tree.GetSelected().SetIcon(0, ImageTexture.CreateFromImage(Image.LoadFromFile(selectedPaths[0])));
+				var path = selectedPaths[0];
+
+				if (System.IO.File.Exists(path)) {
+					Tree.GetSelected().SetIcon(0, ImageTexture.CreateFromImage(Image.LoadFromFile(path)));
+
+					CurrentDirectory = path;
+				}
 			} catch (Exception) {
 			}
 		}
