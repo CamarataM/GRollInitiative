@@ -20,7 +20,7 @@ VScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_h8poj")
 VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_5haku")
 VScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_4hntr")
 
-[node name="grollinitiative" type="Control" node_paths=PackedStringArray("Tree", "AddCreatureWindow", "AddCreatureToggleWindowButton", "ScrollBar")]
+[node name="grollinitiative" type="Control" node_paths=PackedStringArray("Tree", "AddCreatureWindow", "AddCreatureToggleWindowButton", "VScrollBar")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,7 +31,7 @@ script = ExtResource("1_sr7j6")
 Tree = NodePath("MainVBoxContainer/TreeHBoxContainer/Tree")
 AddCreatureWindow = NodePath("add_creature")
 AddCreatureToggleWindowButton = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/AddCreatureToggleWindowButton")
-ScrollBar = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/CreatureTreeVScrollBar")
+VScrollBar = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/CreatureTreeVScrollBar")
 
 [node name="BackgroundPanel" type="Panel" parent="."]
 layout_mode = 1

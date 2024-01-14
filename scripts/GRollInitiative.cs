@@ -1,5 +1,4 @@
 using Godot;
-using System;
 
 public partial class GRollInitiative : Control {
 	[Export]
@@ -9,10 +8,13 @@ public partial class GRollInitiative : Control {
 	[Export]
 	public Button AddCreatureToggleWindowButton;
 	[Export]
-	public VScrollBar ScrollBar;
+	public VScrollBar VScrollBar;
 
 	public Button AddCreatureButton;
 
+	public TreeItem MakeEditableTreeItem = null;
+	public double EditableCooldown = 0;
+	public double EditableDebounce = 0;
 	public override void _Ready() {
 		Tree.CreateItem();
 		Tree.SetColumnClipContent(0, true);
@@ -37,9 +39,27 @@ public partial class GRollInitiative : Control {
 			newItem.SetText(1, AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text);
 			newItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
 			newItem.SetText(2, "" + AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+		};
 
-			for (int i = 1; i < Tree.Columns; i++) {
-				newItem.SetEditable(i, true);
+		Tree.GuiInput += (InputEvent inputEvent) => {
+			if (inputEvent is InputEventKey inputEventKey) {
+				if (inputEventKey.Pressed && inputEventKey.Keycode == Key.Delete) {
+					var selectedItem = Tree.GetSelected();
+
+					if (selectedItem != null) {
+						selectedItem.GetParent().RemoveChild(selectedItem);
+					}
+				}
+			}
+
+			// TODO: This is currently bugged and not fully functional.
+			if (inputEvent is InputEventMouseButton inputEventMouseButton) {
+				if (EditableDebounce <= 0 && inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left) {
+					EditableCooldown = 0.5;
+					EditableDebounce = 0.1;
+
+					MakeEditableTreeItem = Tree.GetItemAtPosition(inputEventMouseButton.GlobalPosition);
+				}
 			}
 		};
 	}
@@ -64,14 +84,33 @@ public partial class GRollInitiative : Control {
 
 		foreach (var child in Tree.GetChildren(includeInternal: true)) {
 			if (child is VScrollBar vScrollBar) {
-				ScrollBar.MinValue = vScrollBar.MinValue;
-				ScrollBar.MaxValue = vScrollBar.MaxValue;
-				ScrollBar.Step = vScrollBar.Step;
-				ScrollBar.CustomStep = vScrollBar.CustomStep;
-				ScrollBar.Page = vScrollBar.Page;
+				// Copy the parameters of the Tree scrollbar to the actual one.
+				VScrollBar.MinValue = vScrollBar.MinValue;
+				VScrollBar.MaxValue = vScrollBar.MaxValue;
+				VScrollBar.Step = vScrollBar.Step;
+				VScrollBar.CustomStep = vScrollBar.CustomStep;
+				VScrollBar.Page = vScrollBar.Page;
 
-				vScrollBar.Ratio = ScrollBar.Ratio;
+				// Copy the ratio from the actual scrollbar to the tree scrollbar.
+				vScrollBar.Ratio = VScrollBar.Ratio;
 			}
 		}
+
+		if (MakeEditableTreeItem != null) {
+			MakeEditableTreeItem.SetEditable(1, true);
+			MakeEditableTreeItem.SetEditable(2, true);
+
+			MakeEditableTreeItem = null;
+		}
+
+		if (EditableCooldown <= 0) {
+			foreach (var treeItem in Tree.GetRoot().GetChildren()) {
+				treeItem.SetEditable(1, false);
+				treeItem.SetEditable(2, false);
+			}
+		}
+
+		EditableCooldown -= delta;
+		EditableDebounce -= delta;
 	}
 }
