@@ -1,0 +1,69 @@
+[gd_scene load_steps=3 format=3 uid="uid://c5w4nbknq64pp"]
+
+[ext_resource type="Script" path="res://scripts/GRollInitiative.cs" id="1_sr7j6"]
+[ext_resource type="PackedScene" uid="uid://cqs8cwer11tn1" path="res://scenes/add_creature.tscn" id="2_c8pud"]
+
+[node name="grollinitiative" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sr7j6")
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Tree" type="Tree" parent="HBoxContainer/MainVBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label" type="Label" parent="HBoxContainer/MainVBoxContainer"]
+layout_mode = 2
+text = "Turn X"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainer/MainVBoxContainer"]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="HBoxContainer/MainVBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Previous"
+
+[node name="Button2" type="Button" parent="HBoxContainer/MainVBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Next"
+
+[node name="ScrollVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="HBoxContainer/ScrollVBoxContainer"]
+layout_mode = 2
+text = "+"
+
+[node name="VScrollBar" type="VScrollBar" parent="HBoxContainer/ScrollVBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 1
+size_flags_vertical = 3
+
+[node name="add_creature" parent="." instance=ExtResource("2_c8pud")]

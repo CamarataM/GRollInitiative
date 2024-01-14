@@ -1,0 +1,21 @@
+{
+	"FormattingOptions": {
+		"NewLine": "\n",
+		"UseTabs": true,
+		"TabSize": 4,
+		"IndentationSize": 4,
+		"SpaceAfterCast": true,
+		"NewLinesForBracesInMethods": false,
+		"NewLinesForBracesInAccessors": false,
+		"NewLinesForBracesInAnonymousMethods": false,
+		"NewLinesForBracesInAnonymousTypes": false,
+		"NewLinesForBracesInControlBlocks": false,
+		"NewLinesForBracesInLambdaExpressionBody": false,
+		"NewLinesForBracesInObjectCollectionArrayInitializers": false,
+		"NewLinesForBracesInProperties": false,
+		"NewLinesForBracesInTypes": false,
+		"NewLineForElse": false,
+		"NewLineForCatch": false,
+		"NewLineForFinally": false
+	}
+}
