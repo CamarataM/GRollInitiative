@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://c5w4nbknq64pp"]
+[gd_scene load_steps=9 format=3 uid="uid://ifwt8gkf02ik"]
 
 [ext_resource type="Script" path="res://scripts/GRollInitiative.cs" id="1_sr7j6"]
 [ext_resource type="PackedScene" uid="uid://cqs8cwer11tn1" path="res://scenes/add_creature.tscn" id="2_c8pud"]

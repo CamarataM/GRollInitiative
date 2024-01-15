@@ -237,9 +237,6 @@ public partial class GRollInitiative : Control {
 
 		// TODO: Implement auto-saving of previous session (maybe not full save and load functionality, although with the OS-native file picker, it would be a lot easier).
 
-		// TODO: Implement distinct team colors functionality for active color.
-		// 		 - Allow for custom colors to be set with default colors of green, red, etc (easy, use ColorPicker).
-
 		// TODO: Make double clicking populate the Add New window rather than directly modifying the tree item.
 		//		 - This has a few key benefits, the primary one being we can have the checking logic all in one place and means we don't have to duplicate the color code when we implement that.
 	}
@@ -345,7 +342,7 @@ public partial class GRollInitiative : Control {
 	}
 
 	public void RemoveHighlightTreeItem(TreeItem treeItem) {
-		for (int i = 0; i < treeItem.GetTree().Columns; i++) {
+		for (int i = 1; i < treeItem.GetTree().Columns; i++) {
 			treeItem.ClearCustomBgColor(i);
 		}
 	}
@@ -401,6 +398,8 @@ public partial class GRollInitiative : Control {
 			} else {
 				treeItem.SetText(2, treeItem.GetMetadata(2).ToString());
 			}
+
+			treeItem.SetCustomBgColor(0, (Color) treeItem.GetMeta(ACTIVE_COLOR_METADATA_KEY));
 
 			for (int i = 0; i < treeItem.GetParent().GetChildCount(); i++) {
 				var prevTreeItem = treeItem.GetPrevInTree();
