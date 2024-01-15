@@ -23,8 +23,12 @@ public partial class GRollInitiative : Control {
 	[Export]
 	public Button PreviousCreatureButton;
 
+	public string DefaultAvatarPath = "res://resources/test_avatar.png";
+	// public string DefaultAvatarPath = "default";
+
 	public Button AddCreatureButton;
 	public Button EditCreatureButton;
+	public TextureRect AddCreatureAvatarTextureRect;
 	public ConfirmationDialog ClearAllCreaturesConfirmationDialog;
 	public ColorPickerButton TeamColorPickerButton;
 
@@ -36,6 +40,8 @@ public partial class GRollInitiative : Control {
 
 	public const string TURN_NUMBER_METADATA_KEY = "turn_number";
 	public const string ACTIVE_COLOR_METADATA_KEY = "active_color";
+	public const string AVATAR_PATH_METADATA_KEY = "avatar_path";
+	public const string CREATURE_RESOURCE_METADATA_KEY = "creature_resource";
 
 	// Taken From 01/13/2024 10:31 PM: https://docs.godotengine.org/en/stable/classes/class_filedialog.html#class-filedialog-property-filters
 	public List<string> FileDialogFilterStringList = new List<string>() { "*.png, *.jpg, *.jpeg, *.svg, *.tga, *.webp ; Supported Images" };
@@ -62,7 +68,7 @@ public partial class GRollInitiative : Control {
 
 		// Handle visibility toggle.
 		AddCreatureToggleWindowButton.Pressed += () => {
-			AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = GD.Load<Texture2D>("res://resources/test_avatar.png");
+			AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(GD.Load<Image>(DefaultAvatarPath));
 
 			AddCreatureButton.Visible = true;
 			EditCreatureButton.Visible = false;
@@ -88,6 +94,8 @@ public partial class GRollInitiative : Control {
 			}
 		};
 
+		AddCreatureAvatarTextureRect = AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage");
+
 		AddCreatureButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/AddButton");
 		EditCreatureButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/EditButton");
 		foreach (var button in new Button[] { AddCreatureButton, EditCreatureButton }) {
@@ -99,11 +107,22 @@ public partial class GRollInitiative : Control {
 					treeItem = Tree.CreateItem();
 				}
 
-				// newItem.SetIcon(0, GD.Load<Texture2D>("res://resources/test_avatar.png"));
-				treeItem.SetIcon(0, AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture);
+				CreatureResource creatureResource = new CreatureResource((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY, DefaultAvatarPath), AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text, TeamColorPickerButton.Color);
+				treeItem.SetMeta(CREATURE_RESOURCE_METADATA_KEY, creatureResource);
+
+				Image avatarImage = null;
+				if (creatureResource.AvatarPath == DefaultAvatarPath) {
+					// Load the image as a resource from the internal resources.
+					avatarImage = GD.Load<Image>(creatureResource.AvatarPath);
+				} else {
+					// Load the image from the filesystem.
+					avatarImage = Image.LoadFromFile(creatureResource.AvatarPath);
+				}
+
+				treeItem.SetIcon(0, ImageTexture.CreateFromImage(avatarImage));
 				treeItem.SetIconMaxWidth(0, TreeIconWidthSize);
 
-				treeItem.SetText(1, AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text);
+				treeItem.SetText(1, creatureResource.Name);
 				treeItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
 				treeItem.SetTextOverrunBehavior(1, TextServer.OverrunBehavior.TrimEllipsis);
 				treeItem.SetExpandRight(1, true);
@@ -186,7 +205,7 @@ public partial class GRollInitiative : Control {
 		};
 
 		AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton").Pressed += () => {
-			OpenFileDialog(nameof(AddOrEditCreatureImageCallback));
+			OpenCreatureAvatarFileDialog(nameof(AddOrEditCreatureImageCallback));
 		};
 
 		TeamColorPickerButton = AddCreatureWindow.GetNode<ColorPickerButton>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer/ColorPickerButton");
@@ -293,7 +312,7 @@ public partial class GRollInitiative : Control {
 		EditableDebounce -= delta;
 	}
 
-	public void OpenFileDialog(StringName callbackFunctionStringName) {
+	public void OpenCreatureAvatarFileDialog(StringName callbackFunctionStringName) {
 		DisplayServer.FileDialogShow("Select creature avatar image...", CurrentDirectory, "", false, DisplayServer.FileDialogMode.OpenFile, FileDialogFilterStringList.ToArray(), new Callable(this, callbackFunctionStringName));
 	}
 
@@ -304,9 +323,10 @@ public partial class GRollInitiative : Control {
 				var path = selectedPaths[0];
 
 				if (System.IO.File.Exists(path)) {
-					AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(path));
+					AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(path));
 
 					CurrentDirectory = path;
+					AddCreatureAvatarTextureRect.SetMeta(AVATAR_PATH_METADATA_KEY, path);
 				}
 			} catch (Exception) {
 			}
