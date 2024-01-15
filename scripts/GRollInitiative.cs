@@ -121,14 +121,7 @@ public partial class GRollInitiative : Control {
 				}
 
 				// Write the CreatureResource to the current tree item.
-				CreateTreeItemFromCreatureResource(Tree, GetCreatureResourceFromAddCreatureWindow(), treeItem);
-
-				// Set the initiative column.
-				treeItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
-				treeItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
-				treeItem.SetExpandRight(2, false);
-
-				UpdateUI();
+				CreateInitiativeTreeItemFromCreatureResource(GetCreatureResourceFromAddCreatureWindow(), treeItem: treeItem);
 
 				if (EditCreatureTreeItem != null) {
 					AddCreatureWindow.Visible = false;
@@ -182,6 +175,18 @@ public partial class GRollInitiative : Control {
 						EditCreatureButton.Visible = true;
 
 						AddCreatureWindow.Visible = true;
+					}
+				}
+			}
+		};
+
+		GalleryTree.GuiInput += (InputEvent inputEvent) => {
+			if (inputEvent is InputEventMouseButton inputEventMouseButton) {
+				if (inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left && inputEventMouseButton.DoubleClick) {
+					var treeItem = GalleryTree.GetItemAtPosition(inputEventMouseButton.Position);
+
+					if (treeItem != null) {
+						CreateInitiativeTreeItemFromCreatureResource((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY));
 					}
 				}
 			}
@@ -248,7 +253,7 @@ public partial class GRollInitiative : Control {
 		};
 
 		SaveToGalleryButton.Pressed += () => {
-			var treeItem = CreateTreeItemFromCreatureResource(GalleryTree, GetCreatureResourceFromAddCreatureWindow());
+			var treeItem = CreateGeneralTreeItemFromCreatureResource(GalleryTree, GetCreatureResourceFromAddCreatureWindow());
 			treeItem.SetIconMaxWidth(0, GalleryTreeIconWidthSize);
 		};
 
@@ -312,7 +317,18 @@ public partial class GRollInitiative : Control {
 		EditableDebounce -= delta;
 	}
 
-	public TreeItem CreateTreeItemFromCreatureResource(Tree tree, CreatureResource creatureResource, TreeItem treeItem = null) {
+	public void CreateInitiativeTreeItemFromCreatureResource(CreatureResource creatureResource, TreeItem treeItem = null) {
+		var newTreeItem = CreateGeneralTreeItemFromCreatureResource(Tree, creatureResource: creatureResource, treeItem: treeItem);
+
+		// Set the initiative column.
+		newTreeItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
+		newTreeItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+		newTreeItem.SetExpandRight(2, false);
+
+		UpdateUI();
+	}
+
+	public TreeItem CreateGeneralTreeItemFromCreatureResource(Tree tree, CreatureResource creatureResource, TreeItem treeItem = null) {
 		if (treeItem == null) {
 			treeItem = tree.CreateItem();
 		}
