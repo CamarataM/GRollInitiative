@@ -1,4 +1,5 @@
 using Godot;
+using Slugify;
 using System;
 using System.Collections.Generic;
 
@@ -24,6 +25,7 @@ public partial class GRollInitiative : Control {
 	public Button PreviousCreatureButton;
 
 	public string DefaultAvatarPath = "res://resources/test_avatar.png";
+	public string DefaultGalleryFolderPath = ProjectSettings.GlobalizePath("user://gallery");
 
 	public Button AddCreatureButton;
 	public Button EditCreatureButton;
@@ -35,6 +37,8 @@ public partial class GRollInitiative : Control {
 
 	public TreeItem ActiveCreatureTreeItem = null;
 	public TreeItem EditCreatureTreeItem = null;
+
+	public AcceptDialog NameInvalidConfirmationDialog;
 
 	public double EditableCooldown = 0;
 	public double EditableDebounce = 0;
@@ -53,7 +57,11 @@ public partial class GRollInitiative : Control {
 	public int GalleryTreeIconWidthSize = 20;
 	public double PreviousRatio = 0;
 
+	public const string GALLERY_RESOURCE_FILE_EXTENSION = ".tres";
+
 	public override void _Ready() {
+		System.IO.Directory.CreateDirectory(DefaultGalleryFolderPath);
+
 		TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, 0);
 
 		Tree.CreateItem();
@@ -76,6 +84,17 @@ public partial class GRollInitiative : Control {
 		GalleryTree.SetColumnCustomMinimumWidth(1, 100);
 		GalleryTree.SetColumnExpand(1, true);
 		GalleryTree.SetColumnExpandRatio(1, 3);
+
+		foreach (var file in System.IO.Directory.EnumerateFiles(DefaultGalleryFolderPath)) {
+			// TODO: Log error.
+			try {
+				if (file.EndsWith(GALLERY_RESOURCE_FILE_EXTENSION)) {
+					var creatureResource = ResourceLoader.Load<CreatureResource>(file);
+					CreateGalleryTreeItemFromCreatureResource(creatureResource);
+				}
+			} catch (Exception) {
+			}
+		}
 
 		// Handle visibility toggle.
 		AddCreatureToggleWindowButton.Pressed += () => {
@@ -113,19 +132,23 @@ public partial class GRollInitiative : Control {
 		EditCreatureButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/EditButton");
 		foreach (var button in new Button[] { AddCreatureButton, EditCreatureButton }) {
 			button.Pressed += () => {
-				TreeItem treeItem = null;
-				if (EditCreatureTreeItem != null) {
-					treeItem = EditCreatureTreeItem;
-				} else {
-					treeItem = Tree.CreateItem();
-				}
+				var creatureResource = GetCreatureResourceFromAddCreatureWindow();
 
-				// Write the CreatureResource to the current tree item.
-				CreateInitiativeTreeItemFromCreatureResource(GetCreatureResourceFromAddCreatureWindow(), treeItem: treeItem);
+				if (creatureResource != null) {
+					TreeItem treeItem = null;
+					if (EditCreatureTreeItem != null) {
+						treeItem = EditCreatureTreeItem;
+					} else {
+						treeItem = Tree.CreateItem();
+					}
 
-				if (EditCreatureTreeItem != null) {
-					AddCreatureWindow.Visible = false;
-					EditCreatureTreeItem = null;
+					// Write the CreatureResource to the current tree item.
+					CreateInitiativeTreeItemFromCreatureResource(creatureResource, treeItem: treeItem);
+
+					if (EditCreatureTreeItem != null) {
+						AddCreatureWindow.Visible = false;
+						EditCreatureTreeItem = null;
+					}
 				}
 			};
 		}
@@ -253,13 +276,23 @@ public partial class GRollInitiative : Control {
 		};
 
 		SaveToGalleryButton.Pressed += () => {
-			var treeItem = CreateGeneralTreeItemFromCreatureResource(GalleryTree, GetCreatureResourceFromAddCreatureWindow());
-			treeItem.SetIconMaxWidth(0, GalleryTreeIconWidthSize);
-		};
+			var creatureResource = GetCreatureResourceFromAddCreatureWindow();
 
-		// TODO: Implement gallery feature, which allows for entries to be saved and used later.
-		// 		 - Will need to have method to convert name-image pairs to file (easy).
-		// 		 - Will need to handle missing images (easy).
+			if (creatureResource != null) {
+				CreateGalleryTreeItemFromCreatureResource(creatureResource);
+
+				SlugHelper slugHelper = new SlugHelper();
+				foreach (var child in GalleryTree.GetRoot().GetChildren()) {
+					var childCreatureResource = (CreatureResource) child.GetMeta(CREATURE_RESOURCE_METADATA_KEY);
+					var childCreatureResourceFilePath = System.IO.Path.Join(DefaultGalleryFolderPath, slugHelper.GenerateSlug(childCreatureResource.Name + "-" + childCreatureResource.TeamColor) + GALLERY_RESOURCE_FILE_EXTENSION);
+
+					var error = ResourceSaver.Save(childCreatureResource, ProjectSettings.GlobalizePath(childCreatureResourceFilePath));
+					if (error != Error.Ok) {
+						GD.PrintErr("Got error trying to save '" + childCreatureResource + "' to path '" + ProjectSettings.GlobalizePath(childCreatureResourceFilePath) + "' (error '" + error + "').");
+					}
+				}
+			}
+		};
 
 		// TODO: Implement auto-saving of previous session (maybe not full save and load functionality, although with the OS-native file picker, it would be a lot easier).
 	}
@@ -317,7 +350,7 @@ public partial class GRollInitiative : Control {
 		EditableDebounce -= delta;
 	}
 
-	public void CreateInitiativeTreeItemFromCreatureResource(CreatureResource creatureResource, TreeItem treeItem = null) {
+	public TreeItem CreateInitiativeTreeItemFromCreatureResource(CreatureResource creatureResource, TreeItem treeItem = null) {
 		var newTreeItem = CreateGeneralTreeItemFromCreatureResource(Tree, creatureResource: creatureResource, treeItem: treeItem);
 
 		// Set the initiative column.
@@ -326,6 +359,18 @@ public partial class GRollInitiative : Control {
 		newTreeItem.SetExpandRight(2, false);
 
 		UpdateUI();
+
+		return newTreeItem;
+	}
+
+	public TreeItem CreateGalleryTreeItemFromCreatureResource(CreatureResource creatureResource, TreeItem treeItem = null) {
+		var newTreeItem = CreateGeneralTreeItemFromCreatureResource(GalleryTree, creatureResource: creatureResource, treeItem: treeItem);
+
+		newTreeItem.SetIconMaxWidth(0, GalleryTreeIconWidthSize);
+
+		UpdateUI();
+
+		return newTreeItem;
 	}
 
 	public TreeItem CreateGeneralTreeItemFromCreatureResource(Tree tree, CreatureResource creatureResource, TreeItem treeItem = null) {
@@ -336,12 +381,14 @@ public partial class GRollInitiative : Control {
 		treeItem.SetMeta(CREATURE_RESOURCE_METADATA_KEY, creatureResource);
 
 		Image avatarImage = null;
-		if (creatureResource.AvatarPath == DefaultAvatarPath) {
-			// Load the image as a resource from the internal resources.
-			avatarImage = GD.Load<Image>(creatureResource.AvatarPath);
-		} else {
+		if (creatureResource.AvatarPath != DefaultAvatarPath && System.IO.File.Exists(creatureResource.AvatarPath)) {
 			// Load the image from the filesystem.
 			avatarImage = Image.LoadFromFile(creatureResource.AvatarPath);
+		}
+
+		if (avatarImage == null) {
+			// Load the image as a resource from the internal resources.
+			avatarImage = GD.Load<Image>(DefaultAvatarPath);
 		}
 
 		treeItem.SetIcon(0, ImageTexture.CreateFromImage(avatarImage));
@@ -357,7 +404,24 @@ public partial class GRollInitiative : Control {
 	}
 
 	public CreatureResource GetCreatureResourceFromAddCreatureWindow() {
-		return new CreatureResource((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY, DefaultAvatarPath), AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text, TeamColorPickerButton.Color);
+		var name = AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text;
+
+		if (name != null && name.Trim().Length > 0) {
+			return new CreatureResource((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY, DefaultAvatarPath), name, TeamColorPickerButton.Color);
+		} else {
+			if (NameInvalidConfirmationDialog == null) {
+				NameInvalidConfirmationDialog = new AcceptDialog();
+
+				AddCreatureWindow.AddChild(NameInvalidConfirmationDialog);
+			}
+
+			NameInvalidConfirmationDialog.Position = (Vector2I) (this.GetWindow().GetPositionWithDecorations() + (this.GetWindow().GetSizeWithDecorations() * new Vector2(0.5f, 0.5f) - (NameInvalidConfirmationDialog.GetSizeWithDecorations() * new Vector2(0.5f, 0.5f))));
+			NameInvalidConfirmationDialog.Visible = true;
+
+			NameInvalidConfirmationDialog.DialogText = "Invalid name for creature '" + name + "'.";
+		}
+
+		return null;
 	}
 
 	public void OpenCreatureAvatarFileDialog(StringName callbackFunctionStringName) {

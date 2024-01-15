@@ -84,10 +84,11 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="ColorPickerButton" type="ColorPickerButton" parent="MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer"]
-custom_minimum_size = Vector2(35, 0)
+custom_minimum_size = Vector2(35, 35)
 layout_mode = 2
 
 [node name="SaveToGalleryButton" type="Button" parent="MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer"]
+custom_minimum_size = Vector2(35, 35)
 layout_mode = 2
 tooltip_text = "Save to Gallery"
 text = "⌵"
