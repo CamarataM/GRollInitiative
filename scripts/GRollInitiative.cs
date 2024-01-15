@@ -24,13 +24,14 @@ public partial class GRollInitiative : Control {
 	public Button PreviousCreatureButton;
 
 	public string DefaultAvatarPath = "res://resources/test_avatar.png";
-	// public string DefaultAvatarPath = "default";
 
 	public Button AddCreatureButton;
 	public Button EditCreatureButton;
 	public TextureRect AddCreatureAvatarTextureRect;
 	public ConfirmationDialog ClearAllCreaturesConfirmationDialog;
 	public ColorPickerButton TeamColorPickerButton;
+	public Button SaveToGalleryButton;
+	public Tree GalleryTree;
 
 	public TreeItem ActiveCreatureTreeItem = null;
 	public TreeItem EditCreatureTreeItem = null;
@@ -39,7 +40,6 @@ public partial class GRollInitiative : Control {
 	public double EditableDebounce = 0;
 
 	public const string TURN_NUMBER_METADATA_KEY = "turn_number";
-	public const string ACTIVE_COLOR_METADATA_KEY = "active_color";
 	public const string AVATAR_PATH_METADATA_KEY = "avatar_path";
 	public const string CREATURE_RESOURCE_METADATA_KEY = "creature_resource";
 
@@ -50,6 +50,7 @@ public partial class GRollInitiative : Control {
 	public string CurrentDirectory = DefaultCurrentDirectory;
 
 	public int TreeIconWidthSize = 60;
+	public int GalleryTreeIconWidthSize = 20;
 	public double PreviousRatio = 0;
 
 	public override void _Ready() {
@@ -65,6 +66,16 @@ public partial class GRollInitiative : Control {
 		Tree.SetColumnExpandRatio(1, 3);
 
 		Tree.SetColumnCustomMinimumWidth(2, 10);
+
+		GalleryTree = AddCreatureWindow.GetNode<Tree>("MarginContainer/VBoxContainer/GalleryTree");
+		GalleryTree.CreateItem();
+		GalleryTree.SetColumnClipContent(0, true);
+		GalleryTree.SetColumnCustomMinimumWidth(0, GalleryTreeIconWidthSize);
+
+		GalleryTree.SetColumnClipContent(1, true);
+		GalleryTree.SetColumnCustomMinimumWidth(1, 100);
+		GalleryTree.SetColumnExpand(1, true);
+		GalleryTree.SetColumnExpandRatio(1, 3);
 
 		// Handle visibility toggle.
 		AddCreatureToggleWindowButton.Pressed += () => {
@@ -96,6 +107,8 @@ public partial class GRollInitiative : Control {
 
 		AddCreatureAvatarTextureRect = AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage");
 
+		SaveToGalleryButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer/SaveToGalleryButton");
+
 		AddCreatureButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/AddButton");
 		EditCreatureButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/EditButton");
 		foreach (var button in new Button[] { AddCreatureButton, EditCreatureButton }) {
@@ -107,31 +120,13 @@ public partial class GRollInitiative : Control {
 					treeItem = Tree.CreateItem();
 				}
 
-				CreatureResource creatureResource = new CreatureResource((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY, DefaultAvatarPath), AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text, TeamColorPickerButton.Color);
-				treeItem.SetMeta(CREATURE_RESOURCE_METADATA_KEY, creatureResource);
+				// Write the CreatureResource to the current tree item.
+				CreateTreeItemFromCreatureResource(Tree, GetCreatureResourceFromAddCreatureWindow(), treeItem);
 
-				Image avatarImage = null;
-				if (creatureResource.AvatarPath == DefaultAvatarPath) {
-					// Load the image as a resource from the internal resources.
-					avatarImage = GD.Load<Image>(creatureResource.AvatarPath);
-				} else {
-					// Load the image from the filesystem.
-					avatarImage = Image.LoadFromFile(creatureResource.AvatarPath);
-				}
-
-				treeItem.SetIcon(0, ImageTexture.CreateFromImage(avatarImage));
-				treeItem.SetIconMaxWidth(0, TreeIconWidthSize);
-
-				treeItem.SetText(1, creatureResource.Name);
-				treeItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
-				treeItem.SetTextOverrunBehavior(1, TextServer.OverrunBehavior.TrimEllipsis);
-				treeItem.SetExpandRight(1, true);
-
+				// Set the initiative column.
 				treeItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
 				treeItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
 				treeItem.SetExpandRight(2, false);
-
-				treeItem.SetMeta(ACTIVE_COLOR_METADATA_KEY, TeamColorPickerButton.Color);
 
 				UpdateUI();
 
@@ -252,6 +247,11 @@ public partial class GRollInitiative : Control {
 			ClearAllCreaturesConfirmationDialog.DialogText = "Do you want to clear all " + Tree.GetRoot().GetChildCount() + " creatures?";
 		};
 
+		SaveToGalleryButton.Pressed += () => {
+			var treeItem = CreateTreeItemFromCreatureResource(GalleryTree, GetCreatureResourceFromAddCreatureWindow());
+			treeItem.SetIconMaxWidth(0, GalleryTreeIconWidthSize);
+		};
+
 		// TODO: Implement gallery feature, which allows for entries to be saved and used later.
 		// 		 - Will need to have method to convert name-image pairs to file (easy).
 		// 		 - Will need to handle missing images (easy).
@@ -312,6 +312,38 @@ public partial class GRollInitiative : Control {
 		EditableDebounce -= delta;
 	}
 
+	public TreeItem CreateTreeItemFromCreatureResource(Tree tree, CreatureResource creatureResource, TreeItem treeItem = null) {
+		if (treeItem == null) {
+			treeItem = tree.CreateItem();
+		}
+
+		treeItem.SetMeta(CREATURE_RESOURCE_METADATA_KEY, creatureResource);
+
+		Image avatarImage = null;
+		if (creatureResource.AvatarPath == DefaultAvatarPath) {
+			// Load the image as a resource from the internal resources.
+			avatarImage = GD.Load<Image>(creatureResource.AvatarPath);
+		} else {
+			// Load the image from the filesystem.
+			avatarImage = Image.LoadFromFile(creatureResource.AvatarPath);
+		}
+
+		treeItem.SetIcon(0, ImageTexture.CreateFromImage(avatarImage));
+		treeItem.SetIconMaxWidth(0, TreeIconWidthSize);
+		treeItem.SetCustomBgColor(0, ((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY)).TeamColor);
+
+		treeItem.SetText(1, creatureResource.Name);
+		treeItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
+		treeItem.SetTextOverrunBehavior(1, TextServer.OverrunBehavior.TrimEllipsis);
+		treeItem.SetExpandRight(1, true);
+
+		return treeItem;
+	}
+
+	public CreatureResource GetCreatureResourceFromAddCreatureWindow() {
+		return new CreatureResource((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY, DefaultAvatarPath), AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text, TeamColorPickerButton.Color);
+	}
+
 	public void OpenCreatureAvatarFileDialog(StringName callbackFunctionStringName) {
 		DisplayServer.FileDialogShow("Select creature avatar image...", CurrentDirectory, "", false, DisplayServer.FileDialogMode.OpenFile, FileDialogFilterStringList.ToArray(), new Callable(this, callbackFunctionStringName));
 	}
@@ -341,7 +373,7 @@ public partial class GRollInitiative : Control {
 
 	public void HighlightTreeItem(TreeItem treeItem) {
 		for (int i = 0; i < treeItem.GetTree().Columns; i++) {
-			treeItem.SetCustomBgColor(i, (Color) treeItem.GetMeta(ACTIVE_COLOR_METADATA_KEY));
+			treeItem.SetCustomBgColor(i, ((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY)).TeamColor);
 		}
 	}
 
@@ -391,7 +423,7 @@ public partial class GRollInitiative : Control {
 				treeItem.SetText(2, treeItem.GetMetadata(2).ToString());
 			}
 
-			treeItem.SetCustomBgColor(0, (Color) treeItem.GetMeta(ACTIVE_COLOR_METADATA_KEY));
+			treeItem.SetCustomBgColor(0, ((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY)).TeamColor);
 
 			for (int i = 0; i < treeItem.GetParent().GetChildCount(); i++) {
 				var prevTreeItem = treeItem.GetPrevInTree();
