@@ -144,7 +144,7 @@ public partial class GRollInitiative : Control {
 					}
 
 					// Write the CreatureResource to the current tree item.
-					CreateInitiativeTreeItemFromCreatureResource(creatureResource, treeItem: treeItem);
+					CreateInitiativeTreeItemFromCreatureResource(creatureResource, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value, treeItem: treeItem);
 
 					if (EditCreatureTreeItem != null) {
 						AddCreatureWindow.Visible = false;
@@ -232,7 +232,7 @@ public partial class GRollInitiative : Control {
 					var treeItem = GalleryTree.GetItemAtPosition(inputEventMouseButton.Position);
 
 					if (treeItem != null) {
-						CreateInitiativeTreeItemFromCreatureResource((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY));
+						CreateInitiativeTreeItemFromCreatureResource((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY), AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
 					}
 				}
 			}
@@ -255,10 +255,10 @@ public partial class GRollInitiative : Control {
 		};
 
 		TeamColorPickerButton = AddCreatureWindow.GetNode<ColorPickerButton>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer/ColorPickerButton");
-		TeamColorPickerButton.Color = new Color(0, 1f, 0, 0.5f);
-		TeamColorPickerButton.GetPicker().AddPreset(new Color(0, 1f, 0, 0.5f));
-		TeamColorPickerButton.GetPicker().AddPreset(new Color(1f, 0, 0, 0.5f));
-		TeamColorPickerButton.GetPicker().AddPreset(new Color(0, 0f, 1f, 0.5f));
+		TeamColorPickerButton.Color = new Color(0, 0.5f, 0, 0.5f);
+		TeamColorPickerButton.GetPicker().AddPreset(new Color(0, 0.5f, 0, 0.5f));
+		TeamColorPickerButton.GetPicker().AddPreset(new Color(0.5f, 0, 0, 0.5f));
+		TeamColorPickerButton.GetPicker().AddPreset(new Color(0, 0f, 0.5f, 0.5f));
 		TeamColorPickerButton.GetPicker().PresetsVisible = true;
 
 		TeamColorPickerButton.VisibilityChanged += () => {
@@ -317,6 +317,10 @@ public partial class GRollInitiative : Control {
 		};
 
 		// TODO: Implement auto-saving of previous session (maybe not full save and load functionality, although with the OS-native file picker, it would be a lot easier).
+
+		// TODO: Implement icon overlays for creature status (incapacitated, dead, etc).
+
+		FillWithTestData();
 	}
 
 	public override void _Process(double delta) {
@@ -376,12 +380,14 @@ public partial class GRollInitiative : Control {
 		return System.IO.Path.Join(DefaultGalleryFolderPath, SlugHelper.GenerateSlug(creatureResource.Name + "-" + creatureResource.TeamColor) + GALLERY_RESOURCE_FILE_EXTENSION);
 	}
 
-	public TreeItem CreateInitiativeTreeItemFromCreatureResource(CreatureResource creatureResource, TreeItem treeItem = null) {
+	public TreeItem CreateInitiativeTreeItemFromCreatureResource(CreatureResource creatureResource, double initiative, TreeItem treeItem = null) {
 		var newTreeItem = CreateGeneralTreeItemFromCreatureResource(Tree, creatureResource: creatureResource, treeItem: treeItem);
 
 		// Set the initiative column.
-		newTreeItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
-		newTreeItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+		// newTreeItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
+		// newTreeItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+		newTreeItem.SetText(2, initiative.ToString());
+		newTreeItem.SetMetadata(2, initiative.ToString());
 		newTreeItem.SetExpandRight(2, false);
 
 		UpdateUI();
@@ -549,5 +555,26 @@ public partial class GRollInitiative : Control {
 		}
 
 		TurnCountTextLabel.Text = "Turn " + TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY, 0);
+	}
+
+	public void FillWithTestData() {
+		GD.PrintErr("!!! TEST DATA FILLED, APPLICATION WILL NOT WORK AS EXPECTED WITH MANUAL INPUT !!!");
+
+		CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_1.png", "Ibris", new Color(0, 0.5f, 0, 0.5f)), 12);
+		CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_2.png", "Ejun", new Color(0, 0.5f, 0, 0.5f)), 6);
+		CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_3.png", "Anir", new Color(0, 0.5f, 0, 0.5f)), 16);
+		CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_4.png", "Vampire 1", new Color(0.5f, 0, 0, 0.5f)), 14);
+
+		AddCreatureWindow.Visible = true;
+
+		AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text = "Vampire 2";
+		AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value = 19;
+		AddCreatureAvatarTextureRect.SetMeta(AVATAR_PATH_METADATA_KEY, "screenshots/avatars/rpg_characters_avatar_4.png");
+		AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY)));
+		TeamColorPickerButton.Color = new Color(0.5f, 0, 0, 0.5f);
+
+		for (int i = 0; i < 15; i++) {
+			NextCreatureButton.EmitSignal(Button.SignalName.Pressed);
+		}
 	}
 }
