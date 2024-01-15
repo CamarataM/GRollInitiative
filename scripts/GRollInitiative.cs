@@ -24,10 +24,12 @@ public partial class GRollInitiative : Control {
 	public Button PreviousCreatureButton;
 
 	public Button AddCreatureButton;
+	public Button EditCreatureButton;
 	public ConfirmationDialog ClearAllCreaturesConfirmationDialog;
 	public ColorPickerButton TeamColorPickerButton;
 
 	public TreeItem ActiveCreatureTreeItem = null;
+	public TreeItem EditCreatureTreeItem = null;
 
 	public double EditableCooldown = 0;
 	public double EditableDebounce = 0;
@@ -62,64 +64,64 @@ public partial class GRollInitiative : Control {
 		AddCreatureToggleWindowButton.Pressed += () => {
 			AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = GD.Load<Texture2D>("res://resources/test_avatar.png");
 
+			AddCreatureButton.Visible = true;
+			EditCreatureButton.Visible = false;
+
 			AddCreatureWindow.Visible = !AddCreatureWindow.Visible;
 		};
 
 		// Handle close button pressed by hiding visibility of the window.
 		AddCreatureWindow.CloseRequested += () => {
 			AddCreatureWindow.Visible = false;
+			EditCreatureTreeItem = null;
 		};
 
-		foreach (var window in new Window[] { this.GetWindow(), AddCreatureWindow }) {
-			window.FilesDropped += (string[] files) => {
+		this.GetWindow().FilesDropped += (string[] files) => {
+			if (AddCreatureWindow.Visible) {
 				foreach (var filePath in files) {
 					if (System.IO.File.Exists(filePath)) {
-						if (AddCreatureWindow.Visible) {
-							AddCreatureImageCallback(true, new string[] { filePath }, 0);
-						} else {
-							// For drag and drop, it doesn't make much sense to have it use the selected by default.
-							// TreeItem treeItemOverride = Tree.GetSelected();
-
-							TreeItem treeItemOverride = null;
-
-							if (treeItemOverride == null) {
-								treeItemOverride = Tree.GetItemAtPosition(GetViewport().GetMousePosition());
-							}
-
-							if (treeItemOverride == null) {
-								treeItemOverride = Tree.GetSelected();
-							}
-
-							EditCreatureImage(true, new string[] { filePath }, 0, treeItemOverride);
-						}
+						AddOrEditCreatureImageCallback(true, new string[] { filePath }, 0);
 					} else {
 						GD.PrintErr("Detected drag-drop with invalid file '" + filePath + "'");
 					}
 				}
-			};
-		}
+			}
+		};
 
 		AddCreatureButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/AddButton");
-		AddCreatureButton.Pressed += () => {
-			var newItem = Tree.CreateItem();
+		EditCreatureButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/EditButton");
+		foreach (var button in new Button[] { AddCreatureButton, EditCreatureButton }) {
+			button.Pressed += () => {
+				TreeItem treeItem = null;
+				if (EditCreatureTreeItem != null) {
+					treeItem = EditCreatureTreeItem;
+				} else {
+					treeItem = Tree.CreateItem();
+				}
 
-			// newItem.SetIcon(0, GD.Load<Texture2D>("res://resources/test_avatar.png"));
-			newItem.SetIcon(0, AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture);
-			newItem.SetIconMaxWidth(0, TreeIconWidthSize);
+				// newItem.SetIcon(0, GD.Load<Texture2D>("res://resources/test_avatar.png"));
+				treeItem.SetIcon(0, AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture);
+				treeItem.SetIconMaxWidth(0, TreeIconWidthSize);
 
-			newItem.SetText(1, AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text);
-			newItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
-			newItem.SetTextOverrunBehavior(1, TextServer.OverrunBehavior.TrimEllipsis);
-			newItem.SetExpandRight(1, true);
+				treeItem.SetText(1, AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text);
+				treeItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
+				treeItem.SetTextOverrunBehavior(1, TextServer.OverrunBehavior.TrimEllipsis);
+				treeItem.SetExpandRight(1, true);
 
-			newItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
-			newItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
-			newItem.SetExpandRight(2, false);
+				treeItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
+				treeItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+				treeItem.SetExpandRight(2, false);
 
-			newItem.SetMeta(ACTIVE_COLOR_METADATA_KEY, TeamColorPickerButton.Color);
+				treeItem.SetMeta(ACTIVE_COLOR_METADATA_KEY, TeamColorPickerButton.Color);
 
-			UpdateUI();
-		};
+				UpdateUI();
+
+				if (EditCreatureTreeItem != null) {
+					AddCreatureWindow.Visible = false;
+					EditCreatureTreeItem = null;
+				}
+			};
+		}
 
 		Tree.GuiInput += (InputEvent inputEvent) => {
 			if (inputEvent is InputEventKey inputEventKey) {
@@ -151,21 +153,21 @@ public partial class GRollInitiative : Control {
 				}
 			}
 
-			// TODO: This is currently bugged and not fully functional (will sometimes fire on a single click, can click one item then another and have it activate).
 			if (inputEvent is InputEventMouseButton inputEventMouseButton) {
-				if (EditableDebounce <= 0 && inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left) {
+				if (inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left && inputEventMouseButton.DoubleClick) {
 					var treeItem = Tree.GetItemAtPosition(inputEventMouseButton.GlobalPosition);
 
 					if (treeItem != null) {
-						treeItem.CallDeferred(TreeItem.MethodName.SetEditable, 1, true);
-						treeItem.CallDeferred(TreeItem.MethodName.SetEditable, 2, true);
+						EditCreatureTreeItem = treeItem;
 
-						if (EditableCooldown > 0 && Tree.GetColumnAtPosition(inputEventMouseButton.GlobalPosition) == 0) {
-							OpenFileDialog(nameof(EditCreatureImageCallback));
-						}
+						AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = treeItem.GetIcon(0);
+						AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text = treeItem.GetText(1);
+						AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value = (double) treeItem.GetMetadata(2);
 
-						EditableCooldown = 0.2;
-						EditableDebounce = 0.1;
+						AddCreatureButton.Visible = false;
+						EditCreatureButton.Visible = true;
+
+						AddCreatureWindow.Visible = true;
 					}
 				}
 			}
@@ -184,7 +186,7 @@ public partial class GRollInitiative : Control {
 		};
 
 		AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton").Pressed += () => {
-			OpenFileDialog(nameof(AddCreatureImageCallback));
+			OpenFileDialog(nameof(AddOrEditCreatureImageCallback));
 		};
 
 		TeamColorPickerButton = AddCreatureWindow.GetNode<ColorPickerButton>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer/ColorPickerButton");
@@ -236,9 +238,6 @@ public partial class GRollInitiative : Control {
 		// 		 - Will need to handle missing images (easy).
 
 		// TODO: Implement auto-saving of previous session (maybe not full save and load functionality, although with the OS-native file picker, it would be a lot easier).
-
-		// TODO: Make double clicking populate the Add New window rather than directly modifying the tree item.
-		//		 - This has a few key benefits, the primary one being we can have the checking logic all in one place and means we don't have to duplicate the color code when we implement that.
 	}
 
 	public override void _Process(double delta) {
@@ -298,7 +297,7 @@ public partial class GRollInitiative : Control {
 		DisplayServer.FileDialogShow("Select creature avatar image...", CurrentDirectory, "", false, DisplayServer.FileDialogMode.OpenFile, FileDialogFilterStringList.ToArray(), new Callable(this, callbackFunctionStringName));
 	}
 
-	public void AddCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
+	public void AddOrEditCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
 		if (status && selectedPaths.Length > 0) {
 			// TODO: Log on error.
 			try {
@@ -306,33 +305,6 @@ public partial class GRollInitiative : Control {
 
 				if (System.IO.File.Exists(path)) {
 					AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(path));
-
-					CurrentDirectory = path;
-				}
-			} catch (Exception) {
-			}
-		}
-	}
-
-	// This is necessary due to the callback parameters (even optional ones) needing to be exactly as expected.
-	public void EditCreatureImageCallback(bool status, string[] selectedPaths, int selectedFilterIndex) {
-		EditCreatureImage(status: status, selectedPaths: selectedPaths, selectedFilterIndex: selectedFilterIndex);
-	}
-
-	public void EditCreatureImage(bool status, string[] selectedPaths, int selectedFilterIndex, TreeItem treeItemOverride = null) {
-		if (status && selectedPaths.Length > 0) {
-			// TODO: Log on error.
-			try {
-				var path = selectedPaths[0];
-
-				if (System.IO.File.Exists(path)) {
-					if (treeItemOverride == null) {
-						treeItemOverride = Tree.GetSelected();
-					}
-
-					if (treeItemOverride != null) {
-						treeItemOverride.SetIcon(0, ImageTexture.CreateFromImage(Image.LoadFromFile(path)));
-					}
 
 					CurrentDirectory = path;
 				}
