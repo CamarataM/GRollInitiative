@@ -58,6 +58,7 @@ public partial class GRollInitiative : Control {
 	public double PreviousRatio = 0;
 
 	public const string GALLERY_RESOURCE_FILE_EXTENSION = ".tres";
+	public static readonly SlugHelper SlugHelper = new SlugHelper();
 
 	public override void _Ready() {
 		System.IO.Directory.CreateDirectory(DefaultGalleryFolderPath);
@@ -204,6 +205,28 @@ public partial class GRollInitiative : Control {
 		};
 
 		GalleryTree.GuiInput += (InputEvent inputEvent) => {
+			if (inputEvent is InputEventKey inputEventKey) {
+				if (inputEventKey.Pressed && inputEventKey.Keycode == Key.Delete) {
+					int galleryTreeChildCount = GalleryTree.GetRoot().GetChildCount();
+					for (int i = 0; i < galleryTreeChildCount; i++) {
+						var selectedItem = GalleryTree.GetNextSelected(null);
+
+						if (selectedItem != null) {
+							var filePath = GetCreatureResourceFilePath((CreatureResource) selectedItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY));
+							if (System.IO.File.Exists(filePath)) {
+								System.IO.File.Move(filePath, filePath + ".dis");
+							}
+
+							selectedItem.GetParent().RemoveChild(selectedItem);
+						} else {
+							break;
+						}
+					}
+
+					UpdateUI();
+				}
+			}
+
 			if (inputEvent is InputEventMouseButton inputEventMouseButton) {
 				if (inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left && inputEventMouseButton.DoubleClick) {
 					var treeItem = GalleryTree.GetItemAtPosition(inputEventMouseButton.Position);
@@ -281,10 +304,9 @@ public partial class GRollInitiative : Control {
 			if (creatureResource != null) {
 				CreateGalleryTreeItemFromCreatureResource(creatureResource);
 
-				SlugHelper slugHelper = new SlugHelper();
 				foreach (var child in GalleryTree.GetRoot().GetChildren()) {
 					var childCreatureResource = (CreatureResource) child.GetMeta(CREATURE_RESOURCE_METADATA_KEY);
-					var childCreatureResourceFilePath = System.IO.Path.Join(DefaultGalleryFolderPath, slugHelper.GenerateSlug(childCreatureResource.Name + "-" + childCreatureResource.TeamColor) + GALLERY_RESOURCE_FILE_EXTENSION);
+					var childCreatureResourceFilePath = GetCreatureResourceFilePath(childCreatureResource);
 
 					var error = ResourceSaver.Save(childCreatureResource, ProjectSettings.GlobalizePath(childCreatureResourceFilePath));
 					if (error != Error.Ok) {
@@ -348,6 +370,10 @@ public partial class GRollInitiative : Control {
 
 		EditableCooldown -= delta;
 		EditableDebounce -= delta;
+	}
+
+	public string GetCreatureResourceFilePath(CreatureResource creatureResource) {
+		return System.IO.Path.Join(DefaultGalleryFolderPath, SlugHelper.GenerateSlug(creatureResource.Name + "-" + creatureResource.TeamColor) + GALLERY_RESOURCE_FILE_EXTENSION);
 	}
 
 	public TreeItem CreateInitiativeTreeItemFromCreatureResource(CreatureResource creatureResource, TreeItem treeItem = null) {
