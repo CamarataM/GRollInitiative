@@ -320,7 +320,7 @@ public partial class GRollInitiative : Control {
 
 		// TODO: Implement icon overlays for creature status (incapacitated, dead, etc).
 
-		FillWithTestData();
+		// FillWithTestData();
 	}
 
 	public override void _Process(double delta) {
