@@ -1,26 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://ifwt8gkf02ik"]
+[gd_scene load_steps=3 format=3 uid="uid://ifwt8gkf02ik"]
 
 [ext_resource type="Script" path="res://scripts/GRollInitiative.cs" id="1_sr7j6"]
 [ext_resource type="PackedScene" uid="uid://cqs8cwer11tn1" path="res://scenes/add_creature.tscn" id="2_c8pud"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bbf1y"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_kq2e3"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_h8poj"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5haku"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_4hntr"]
-
-[sub_resource type="Theme" id="Theme_12dsh"]
-VScrollBar/styles/grabber = SubResource("StyleBoxEmpty_bbf1y")
-VScrollBar/styles/grabber_highlight = SubResource("StyleBoxEmpty_kq2e3")
-VScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_h8poj")
-VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_5haku")
-VScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_4hntr")
-
-[node name="grollinitiative" type="Control" node_paths=PackedStringArray("Tree", "AddCreatureWindow", "AddCreatureToggleWindowButton", "AlwaysOnTopToggleButton", "ClearAllCreaturesButton", "VScrollBar", "TurnCountTextLabel", "NextCreatureButton", "PreviousCreatureButton")]
+[node name="grollinitiative" type="Control" node_paths=PackedStringArray("CreatureVBoxContainer", "AddCreatureWindow", "AddCreatureToggleWindowButton", "AlwaysOnTopToggleButton", "ClearAllCreaturesButton", "VScrollBar", "TurnCountTextLabel", "NextCreatureButton", "PreviousCreatureButton")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -28,15 +11,15 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_sr7j6")
-Tree = NodePath("MainVBoxContainer/TreeHBoxContainer/Tree")
+CreatureVBoxContainer = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollContainer/CreatureVBoxContainer")
 AddCreatureWindow = NodePath("add_creature")
 AddCreatureToggleWindowButton = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/AddCreatureToggleWindowButton")
 AlwaysOnTopToggleButton = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/AlwaysOnTopToggleButton")
 ClearAllCreaturesButton = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/ClearAllCreaturesButton")
 VScrollBar = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/CreatureTreeVScrollBar")
-TurnCountTextLabel = NodePath("MainVBoxContainer/CreatureVBoxContainer/TurnCountLabel")
-NextCreatureButton = NodePath("MainVBoxContainer/CreatureVBoxContainer/TurnControlHBoxContainer/NextTurnButton")
-PreviousCreatureButton = NodePath("MainVBoxContainer/CreatureVBoxContainer/TurnControlHBoxContainer/PreviousTurnButton")
+TurnCountTextLabel = NodePath("MainVBoxContainer/TurnControlVBoxContainer/TurnCountLabel")
+NextCreatureButton = NodePath("MainVBoxContainer/TurnControlVBoxContainer/TurnControlHBoxContainer/NextTurnButton")
+PreviousCreatureButton = NodePath("MainVBoxContainer/TurnControlVBoxContainer/TurnControlHBoxContainer/PreviousTurnButton")
 
 [node name="BackgroundPanel" type="Panel" parent="."]
 layout_mode = 1
@@ -58,17 +41,14 @@ grow_vertical = 2
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Tree" type="Tree" parent="MainVBoxContainer/TreeHBoxContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="MainVBoxContainer/TreeHBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CreatureVBoxContainer" type="VBoxContainer" parent="MainVBoxContainer/TreeHBoxContainer/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme = SubResource("Theme_12dsh")
-columns = 3
-hide_folding = true
-hide_root = true
-select_mode = 2
-scroll_horizontal_enabled = false
-scroll_vertical_enabled = false
 
 [node name="ScrollVBoxContainer" type="VBoxContainer" parent="MainVBoxContainer/TreeHBoxContainer"]
 layout_mode = 2
@@ -95,24 +75,24 @@ layout_mode = 2
 size_flags_horizontal = 1
 size_flags_vertical = 3
 
-[node name="CreatureVBoxContainer" type="VBoxContainer" parent="MainVBoxContainer"]
+[node name="TurnControlVBoxContainer" type="VBoxContainer" parent="MainVBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="TurnCountLabel" type="Label" parent="MainVBoxContainer/CreatureVBoxContainer"]
+[node name="TurnCountLabel" type="Label" parent="MainVBoxContainer/TurnControlVBoxContainer"]
 layout_mode = 2
 text = "Turn 0"
 horizontal_alignment = 1
 
-[node name="TurnControlHBoxContainer" type="HBoxContainer" parent="MainVBoxContainer/CreatureVBoxContainer"]
+[node name="TurnControlHBoxContainer" type="HBoxContainer" parent="MainVBoxContainer/TurnControlVBoxContainer"]
 layout_mode = 2
 
-[node name="PreviousTurnButton" type="Button" parent="MainVBoxContainer/CreatureVBoxContainer/TurnControlHBoxContainer"]
+[node name="PreviousTurnButton" type="Button" parent="MainVBoxContainer/TurnControlVBoxContainer/TurnControlHBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Previous"
 
-[node name="NextTurnButton" type="Button" parent="MainVBoxContainer/CreatureVBoxContainer/TurnControlHBoxContainer"]
+[node name="NextTurnButton" type="Button" parent="MainVBoxContainer/TurnControlVBoxContainer/TurnControlHBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Next"

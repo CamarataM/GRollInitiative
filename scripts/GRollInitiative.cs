@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public partial class GRollInitiative : Control {
 	[Export]
-	public Tree Tree;
+	public VBoxContainer CreatureVBoxContainer;
 	[Export]
 	public Window AddCreatureWindow;
 	[Export]
@@ -61,20 +61,13 @@ public partial class GRollInitiative : Control {
 	public static readonly SlugHelper SlugHelper = new SlugHelper();
 
 	public override void _Ready() {
+		var creatureControl = new CreatureControl();
+		creatureControl.CustomMinimumSize = new Vector2(0, 100);
+		this.CreatureVBoxContainer.AddChild(creatureControl);
+
 		System.IO.Directory.CreateDirectory(DefaultGalleryFolderPath);
 
 		TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, 0);
-
-		Tree.CreateItem();
-		Tree.SetColumnClipContent(0, true);
-		Tree.SetColumnCustomMinimumWidth(0, TreeIconWidthSize);
-
-		Tree.SetColumnClipContent(1, true);
-		Tree.SetColumnCustomMinimumWidth(1, 100);
-		Tree.SetColumnExpand(1, true);
-		Tree.SetColumnExpandRatio(1, 3);
-
-		Tree.SetColumnCustomMinimumWidth(2, 10);
 
 		GalleryTree = AddCreatureWindow.GetNode<Tree>("MarginContainer/VBoxContainer/GalleryTree");
 		GalleryTree.CreateItem();
@@ -136,16 +129,6 @@ public partial class GRollInitiative : Control {
 				var creatureResource = GetCreatureResourceFromAddCreatureWindow();
 
 				if (creatureResource != null) {
-					TreeItem treeItem = null;
-					if (EditCreatureTreeItem != null) {
-						treeItem = EditCreatureTreeItem;
-					} else {
-						treeItem = Tree.CreateItem();
-					}
-
-					// Write the CreatureResource to the current tree item.
-					CreateInitiativeTreeItemFromCreatureResource(creatureResource, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value, treeItem: treeItem);
-
 					if (EditCreatureTreeItem != null) {
 						AddCreatureWindow.Visible = false;
 						EditCreatureTreeItem = null;
@@ -153,56 +136,6 @@ public partial class GRollInitiative : Control {
 				}
 			};
 		}
-
-		Tree.GuiInput += (InputEvent inputEvent) => {
-			if (inputEvent is InputEventKey inputEventKey) {
-				if (inputEventKey.Pressed && inputEventKey.Keycode == Key.Delete) {
-					int treeChildCount = Tree.GetRoot().GetChildCount();
-					for (int i = 0; i < treeChildCount; i++) {
-						var selectedItem = Tree.GetNextSelected(null);
-
-						if (selectedItem != null) {
-							if (selectedItem == ActiveCreatureTreeItem) {
-								ActiveCreatureTreeItem = selectedItem.GetPrevInTree();
-							}
-
-							selectedItem.GetParent().RemoveChild(selectedItem);
-						} else {
-							break;
-						}
-					}
-
-					UpdateUI();
-				}
-
-				if (inputEventKey.Pressed && inputEventKey.CtrlPressed && inputEventKey.Keycode == Key.A) {
-					foreach (var child in Tree.GetRoot().GetChildren()) {
-						for (int i = 0; i < child.GetTree().Columns; i++) {
-							child.Select(i);
-						}
-					}
-				}
-			}
-
-			if (inputEvent is InputEventMouseButton inputEventMouseButton) {
-				if (inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left && inputEventMouseButton.DoubleClick) {
-					var treeItem = Tree.GetItemAtPosition(inputEventMouseButton.GlobalPosition);
-
-					if (treeItem != null) {
-						EditCreatureTreeItem = treeItem;
-
-						AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage").Texture = treeItem.GetIcon(0);
-						AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text = treeItem.GetText(1);
-						AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value = (double) treeItem.GetMetadata(2);
-
-						AddCreatureButton.Visible = false;
-						EditCreatureButton.Visible = true;
-
-						AddCreatureWindow.Visible = true;
-					}
-				}
-			}
-		};
 
 		GalleryTree.GuiInput += (InputEvent inputEvent) => {
 			if (inputEvent is InputEventKey inputEventKey) {
@@ -232,14 +165,10 @@ public partial class GRollInitiative : Control {
 					var treeItem = GalleryTree.GetItemAtPosition(inputEventMouseButton.Position);
 
 					if (treeItem != null) {
-						CreateInitiativeTreeItemFromCreatureResource((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY), AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+						// CreateInitiativeTreeItemFromCreatureResource((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY), AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
 					}
 				}
 			}
-		};
-
-		Tree.ItemEdited += () => {
-			UpdateUI();
 		};
 
 		NextCreatureButton.Pressed += () => {
@@ -286,16 +215,14 @@ public partial class GRollInitiative : Control {
 				AddChild(ClearAllCreaturesConfirmationDialog);
 
 				ClearAllCreaturesConfirmationDialog.Confirmed += () => {
-					foreach (var child in Tree.GetRoot().GetChildren()) {
-						Tree.GetRoot().RemoveChild(child);
-					}
 				};
 			}
 
 			ClearAllCreaturesConfirmationDialog.Position = (Vector2I) (this.GetWindow().GetPositionWithDecorations() + (this.GetWindow().GetSizeWithDecorations() * new Vector2(0.5f, 0.5f) - (ClearAllCreaturesConfirmationDialog.GetSizeWithDecorations() * new Vector2(0.5f, 0.5f))));
 			ClearAllCreaturesConfirmationDialog.Visible = true;
 
-			ClearAllCreaturesConfirmationDialog.DialogText = "Do you want to clear all " + Tree.GetRoot().GetChildCount() + " creatures?";
+			// TODO: Reimplement
+			// ClearAllCreaturesConfirmationDialog.DialogText = "Do you want to clear all " + Tree.GetRoot().GetChildCount() + " creatures?";
 		};
 
 		SaveToGalleryButton.Pressed += () => {
@@ -331,45 +258,7 @@ public partial class GRollInitiative : Control {
 
 		AddCreatureWindow.Position = (Vector2I) (this.GetWindow().Position + AddCreatureToggleWindowButton.GlobalPosition + new Vector2(AddCreatureToggleWindowButton.GetRect().Size.X, 0) + new Vector2(3, 0));
 
-		foreach (var child in Tree.GetChildren(includeInternal: true)) {
-			if (child is VScrollBar vScrollBar) {
-				vScrollBar.Visible = false;
-			}
-
-			if (child is HScrollBar hScrollBar) {
-				hScrollBar.Visible = false;
-			}
-		}
-
-		foreach (var child in Tree.GetChildren(includeInternal: true)) {
-			if (child is VScrollBar treeVScrollBar) {
-				// Copy the parameters of the Tree scrollbar to the actual one.
-				VScrollBar.MinValue = treeVScrollBar.MinValue;
-				VScrollBar.MaxValue = treeVScrollBar.MaxValue;
-				VScrollBar.Step = treeVScrollBar.Step;
-				VScrollBar.CustomStep = treeVScrollBar.CustomStep;
-				VScrollBar.Page = treeVScrollBar.Page;
-
-				// Copy the ratio from the actual scrollbar to the tree scrollbar.
-				if (PreviousRatio != VScrollBar.Ratio) {
-					treeVScrollBar.Ratio = VScrollBar.Ratio;
-				} else if (PreviousRatio != treeVScrollBar.Ratio) {
-					VScrollBar.Ratio = treeVScrollBar.Ratio;
-				}
-
-				PreviousRatio = VScrollBar.Ratio;
-			}
-		}
-
 		if (EditableCooldown <= 0) {
-			foreach (var treeItem in Tree.GetRoot().GetChildren()) {
-				treeItem.SetEditable(1, false);
-				// This is needed to ensure that the word's autowrap correctly if they are changed.
-				treeItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
-				treeItem.SetTextOverrunBehavior(1, TextServer.OverrunBehavior.TrimEllipsis);
-
-				treeItem.SetEditable(2, false);
-			}
 		}
 
 		EditableCooldown -= delta;
@@ -380,20 +269,20 @@ public partial class GRollInitiative : Control {
 		return System.IO.Path.Join(DefaultGalleryFolderPath, SlugHelper.GenerateSlug(creatureResource.Name + "-" + creatureResource.TeamColor) + GALLERY_RESOURCE_FILE_EXTENSION);
 	}
 
-	public TreeItem CreateInitiativeTreeItemFromCreatureResource(CreatureResource creatureResource, double initiative, TreeItem treeItem = null) {
-		var newTreeItem = CreateGeneralTreeItemFromCreatureResource(Tree, creatureResource: creatureResource, treeItem: treeItem);
+	// public TreeItem CreateInitiativeTreeItemFromCreatureResource(CreatureResource creatureResource, double initiative, TreeItem treeItem = null) {
+	// 	var newTreeItem = CreateGeneralTreeItemFromCreatureResource(Tree, creatureResource: creatureResource, treeItem: treeItem);
 
-		// Set the initiative column.
-		// newTreeItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
-		// newTreeItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
-		newTreeItem.SetText(2, initiative.ToString());
-		newTreeItem.SetMetadata(2, initiative.ToString());
-		newTreeItem.SetExpandRight(2, false);
+	// 	// Set the initiative column.
+	// 	// newTreeItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
+	// 	// newTreeItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+	// 	newTreeItem.SetText(2, initiative.ToString());
+	// 	newTreeItem.SetMetadata(2, initiative.ToString());
+	// 	newTreeItem.SetExpandRight(2, false);
 
-		UpdateUI();
+	// 	UpdateUI();
 
-		return newTreeItem;
-	}
+	// 	return newTreeItem;
+	// }
 
 	public TreeItem CreateGalleryTreeItemFromCreatureResource(CreatureResource creatureResource, TreeItem treeItem = null) {
 		var newTreeItem = CreateGeneralTreeItemFromCreatureResource(GalleryTree, creatureResource: creatureResource, treeItem: treeItem);
@@ -510,15 +399,15 @@ public partial class GRollInitiative : Control {
 				}
 			}
 
-			if (nextCreatureTreeItem == null && Tree.GetRoot().GetChildCount() > 0) {
-				if (offset > 0) {
-					nextCreatureTreeItem = Tree.GetRoot().GetChild(0);
-				} else {
-					nextCreatureTreeItem = Tree.GetRoot().GetChild(Tree.GetRoot().GetChildCount() - 1);
-				}
+			// if (nextCreatureTreeItem == null && Tree.GetRoot().GetChildCount() > 0) {
+			// 	if (offset > 0) {
+			// 		nextCreatureTreeItem = Tree.GetRoot().GetChild(0);
+			// 	} else {
+			// 		nextCreatureTreeItem = Tree.GetRoot().GetChild(Tree.GetRoot().GetChildCount() - 1);
+			// 	}
 
-				TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY).AsInt32() + Math.Sign(offset));
-			}
+			// 	TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY).AsInt32() + Math.Sign(offset));
+			// }
 
 			ActiveCreatureTreeItem = nextCreatureTreeItem;
 		}
@@ -527,28 +416,28 @@ public partial class GRollInitiative : Control {
 	}
 
 	public void UpdateUI() {
-		foreach (var treeItem in Tree.GetRoot().GetChildren()) {
-			// Set the current metadata value from the text value. If the value cannot be parsed, set the text to the previous metadata value.
-			if (double.TryParse(treeItem.GetText(2), out double parsedValue)) {
-				treeItem.SetMetadata(2, parsedValue);
-			} else {
-				treeItem.SetText(2, treeItem.GetMetadata(2).ToString());
-			}
+		// foreach (var treeItem in Tree.GetRoot().GetChildren()) {
+		// 	// Set the current metadata value from the text value. If the value cannot be parsed, set the text to the previous metadata value.
+		// 	if (double.TryParse(treeItem.GetText(2), out double parsedValue)) {
+		// 		treeItem.SetMetadata(2, parsedValue);
+		// 	} else {
+		// 		treeItem.SetText(2, treeItem.GetMetadata(2).ToString());
+		// 	}
 
-			treeItem.SetCustomBgColor(0, ((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY)).TeamColor);
+		// 	treeItem.SetCustomBgColor(0, ((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY)).TeamColor);
 
-			for (int i = 0; i < treeItem.GetParent().GetChildCount(); i++) {
-				var prevTreeItem = treeItem.GetPrevInTree();
+		// 	for (int i = 0; i < treeItem.GetParent().GetChildCount(); i++) {
+		// 		var prevTreeItem = treeItem.GetPrevInTree();
 
-				if (prevTreeItem == null || prevTreeItem == treeItem) {
-					break;
-				}
+		// 		if (prevTreeItem == null || prevTreeItem == treeItem) {
+		// 			break;
+		// 		}
 
-				if ((double) treeItem.GetMetadata(2) > (double) prevTreeItem.GetMetadata(2)) {
-					treeItem.MoveBefore(prevTreeItem);
-				}
-			}
-		}
+		// 		if ((double) treeItem.GetMetadata(2) > (double) prevTreeItem.GetMetadata(2)) {
+		// 			treeItem.MoveBefore(prevTreeItem);
+		// 		}
+		// 	}
+		// }
 
 		if (ActiveCreatureTreeItem != null) {
 			HighlightTreeItem(ActiveCreatureTreeItem);
@@ -560,10 +449,10 @@ public partial class GRollInitiative : Control {
 	public void FillWithTestData() {
 		GD.PrintErr("!!! TEST DATA FILLED, APPLICATION WILL NOT WORK AS EXPECTED WITH MANUAL INPUT !!!");
 
-		CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_1.png", "Ibris", new Color(0, 0.5f, 0, 0.5f)), 12);
-		CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_2.png", "Ejun", new Color(0, 0.5f, 0, 0.5f)), 6);
-		CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_3.png", "Anir", new Color(0, 0.5f, 0, 0.5f)), 16);
-		CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_4.png", "Vampire 1", new Color(0.5f, 0, 0, 0.5f)), 14);
+		// CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_1.png", "Ibris", new Color(0, 0.5f, 0, 0.5f)), 12);
+		// CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_2.png", "Ejun", new Color(0, 0.5f, 0, 0.5f)), 6);
+		// CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_3.png", "Anir", new Color(0, 0.5f, 0, 0.5f)), 16);
+		// CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_4.png", "Vampire 1", new Color(0.5f, 0, 0, 0.5f)), 14);
 
 		AddCreatureWindow.Visible = true;
 

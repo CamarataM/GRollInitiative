@@ -1,0 +1,158 @@
+using Godot;
+
+// using RisizableContainerChildType = Godot.BoxContainer;
+using ResizableContainerChildType = Godot.PanelContainer;
+
+[GlobalClass]
+public partial class ResizableHContainer : HBoxContainer {
+	[Export]
+	public int ColumnCount = 0;
+
+	public bool Resizing = false;
+	public bool CanDrag = false;
+
+	// TODO: Mark nullable.
+	public ResizableContainerChildType LeftDraggingContainer = null;
+	public ResizableContainerChildType RightDraggingContainer = null;
+
+	// Need a default constructor for Godot to be able to make the Node.
+	public ResizableHContainer() {
+	}
+
+	public override void _Process(double delta) {
+		base._Process(delta);
+
+		int currentColumns = this.GetChildContainers().Count;
+		if (this.ColumnCount != currentColumns) {
+			// If there are not enough container children, add new resizable children until it is equal to the set column count.
+			while (currentColumns < this.ColumnCount) {
+				var newResizableContainerChildType = new ResizableContainerChildType();
+				newResizableContainerChildType.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+				newResizableContainerChildType.SizeFlagsVertical = SizeFlags.ExpandFill;
+
+				// Add the new element, marking is as internal.
+				this.AddChild(newResizableContainerChildType, @internal: InternalMode.Front);
+
+				currentColumns += 1;
+			}
+
+			// If there are too many container children, remove resizable children until it is equal to the set column count.
+			while (currentColumns > this.ColumnCount) {
+				var containerChildren = GetChildContainers();
+
+				ResizableContainerChildType removeResizableContainerChild = null;
+				for (int i = containerChildren.Count; i >= 0; i++) {
+					var child = containerChildren[i];
+					if (child is ResizableContainerChildType resizableContainerChild) {
+						removeResizableContainerChild = resizableContainerChild;
+						break;
+					}
+				}
+
+				if (removeResizableContainerChild != null) {
+					removeResizableContainerChild.QueueFree();
+				} else {
+					break;
+				}
+
+				currentColumns -= 1;
+			}
+		}
+	}
+
+	public override void _GuiInput(InputEvent @event) {
+		base._GuiInput(@event);
+
+		if (@event is InputEventMouseButton inputEventMouse) {
+			// If we click in an area that can be dragged, set that is resizing.
+			if (this.CanDrag && inputEventMouse.Pressed && inputEventMouse.ButtonIndex == MouseButton.Left) {
+				this.CanDrag = false;
+				this.Resizing = true;
+
+				// Set the child containers minimum size to their current size (so we can manipulate their minimum size).
+				foreach (var child in this.GetChildContainers()) {
+					child.CustomMinimumSize = child.GetGlobalRect().Size;
+				}
+			} else if (!inputEventMouse.Pressed && inputEventMouse.ButtonIndex == MouseButton.Left) {
+				LeftDraggingContainer = null;
+				RightDraggingContainer = null;
+
+				this.Resizing = false;
+			}
+		} else if (@event is InputEventMouseMotion inputEventMouseMotion) {
+			if (this.Resizing) {
+				if (this.LeftDraggingContainer != null && this.RightDraggingContainer != null) {
+					Vector2 leftDraggingContainerNewMinimumSize;
+					Vector2 rightDraggingContainerNewMinimumSize;
+
+					// Offset the minimum size by the relative horizontal movement.
+					leftDraggingContainerNewMinimumSize = this.LeftDraggingContainer.CustomMinimumSize + new Vector2(inputEventMouseMotion.Relative.X, 0);
+					rightDraggingContainerNewMinimumSize = this.RightDraggingContainer.CustomMinimumSize - new Vector2(inputEventMouseMotion.Relative.X, 0);
+
+					// Needed to prevent a scrollbar being created due to one element not being shrunk due to hitting a hard minimum size limit (8px x 8px) while the other one continuously grows. See: https://github.com/godotengine/godot/issues/35005.
+					if (leftDraggingContainerNewMinimumSize.X >= 8 && leftDraggingContainerNewMinimumSize.Y >= 8 && rightDraggingContainerNewMinimumSize.X >= 8 && rightDraggingContainerNewMinimumSize.Y >= 8) {
+						this.LeftDraggingContainer.CustomMinimumSize = leftDraggingContainerNewMinimumSize;
+						this.RightDraggingContainer.CustomMinimumSize = rightDraggingContainerNewMinimumSize;
+					}
+				} else {
+					GD.PrintErr("Got null dragging container. Left: " + this.LeftDraggingContainer + ". Right: " + this.RightDraggingContainer + ".");
+				}
+			} else {
+				// Detect if the current global mouse position is over any of the child containers global rect.
+				bool overResizableContainerChildType = false;
+				foreach (var child in this.GetChildContainers()) {
+					if (child.GetGlobalRect().HasPoint(inputEventMouseMotion.GlobalPosition)) {
+						overResizableContainerChildType = true;
+						break;
+					}
+				}
+
+				// If the mouse is not over any of the children...
+				if (!overResizableContainerChildType) {
+					var containerChildren = GetChildContainers();
+
+					// Then it must be between two children. Iterate the children left to right, finding the one which is closest to the mouse position on the left side.
+					for (int i = 0; i < containerChildren.Count; i++) {
+						var child = containerChildren[i];
+						if (child.GlobalPosition.X < inputEventMouseMotion.GlobalPosition.X) {
+							this.LeftDraggingContainer = child;
+						} else {
+							break;
+						}
+					}
+
+					// Iterate the children right to left, finding the one which is closest to the mouse position on the right side.
+					for (int i = containerChildren.Count - 1; i >= 0; i--) {
+						var child = containerChildren[i];
+						if (child.GlobalPosition.X > inputEventMouseMotion.GlobalPosition.X) {
+							this.RightDraggingContainer = child;
+						} else {
+							break;
+						}
+					}
+
+					// Set the mouse cursor to the drag one and set that we can begin to drag.
+					this.MouseDefaultCursorShape = CursorShape.Hsplit;
+
+					this.CanDrag = true;
+				} else {
+					// ...else if we are over a child container, set the cursor to the default arrow and set that we cannot drag.
+					this.MouseDefaultCursorShape = CursorShape.Arrow;
+					this.CanDrag = false;
+				}
+			}
+		}
+	}
+
+	public Godot.Collections.Array<ResizableContainerChildType> GetChildContainers() {
+		var returnArray = new Godot.Collections.Array<ResizableContainerChildType>();
+
+		foreach (var child in this.GetChildren(includeInternal: true)) {
+			if (child is ResizableContainerChildType resizableContainerChild) {
+				returnArray.Add(resizableContainerChild);
+			}
+		}
+
+		return returnArray;
+	}
+}
