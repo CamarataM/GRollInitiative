@@ -1,9 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://ifwt8gkf02ik"]
+[gd_scene load_steps=4 format=3 uid="uid://ifwt8gkf02ik"]
 
 [ext_resource type="Script" path="res://scripts/GRollInitiative.cs" id="1_sr7j6"]
 [ext_resource type="PackedScene" uid="uid://cqs8cwer11tn1" path="res://scenes/add_creature.tscn" id="2_c8pud"]
+[ext_resource type="PackedScene" uid="uid://bupg5rieul7qi" path="res://scenes/edit_property_cell.tscn" id="3_vjotg"]
 
-[node name="grollinitiative" type="Control" node_paths=PackedStringArray("CreatureVBoxContainer", "AddCreatureWindow", "AddCreatureToggleWindowButton", "AlwaysOnTopToggleButton", "ClearAllCreaturesButton", "VScrollBar", "TurnCountTextLabel", "NextCreatureButton", "PreviousCreatureButton")]
+[node name="grollinitiative" type="Control" node_paths=PackedStringArray("CreatureVBoxContainer", "AddCreatureWindow", "AddCreatureToggleWindowButton", "AlwaysOnTopToggleButton", "ClearAllCreaturesButton", "VScrollBar", "TurnCountTextLabel", "NextCreatureButton", "PreviousCreatureButton", "EditPropertyCellConfirmationDialog")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,6 +21,7 @@ VScrollBar = NodePath("MainVBoxContainer/TreeHBoxContainer/ScrollVBoxContainer/C
 TurnCountTextLabel = NodePath("MainVBoxContainer/TurnControlVBoxContainer/TurnCountLabel")
 NextCreatureButton = NodePath("MainVBoxContainer/TurnControlVBoxContainer/TurnControlHBoxContainer/NextTurnButton")
 PreviousCreatureButton = NodePath("MainVBoxContainer/TurnControlVBoxContainer/TurnControlHBoxContainer/PreviousTurnButton")
+EditPropertyCellConfirmationDialog = NodePath("editpropertycell")
 
 [node name="BackgroundPanel" type="Panel" parent="."]
 layout_mode = 1
@@ -99,3 +101,5 @@ text = "Next"
 
 [node name="add_creature" parent="." instance=ExtResource("2_c8pud")]
 visible = false
+
+[node name="editpropertycell" parent="." instance=ExtResource("3_vjotg")]

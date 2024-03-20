@@ -5,8 +5,17 @@ using ResizableContainerChildType = Godot.PanelContainer;
 
 [GlobalClass]
 public partial class ResizableHContainer : HBoxContainer {
+	private int _ColumnCount = 0;
+
 	[Export]
-	public int ColumnCount = 0;
+	public int ColumnCount {
+		get => _ColumnCount;
+		set {
+			_ColumnCount = value;
+
+			RefreshColumns();
+		}
+	}
 
 	public bool Resizing = false;
 	public bool CanDrag = false;
@@ -22,41 +31,8 @@ public partial class ResizableHContainer : HBoxContainer {
 	public override void _Process(double delta) {
 		base._Process(delta);
 
-		int currentColumns = this.GetChildContainers().Count;
-		if (this.ColumnCount != currentColumns) {
-			// If there are not enough container children, add new resizable children until it is equal to the set column count.
-			while (currentColumns < this.ColumnCount) {
-				var newResizableContainerChildType = new ResizableContainerChildType();
-				newResizableContainerChildType.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-				newResizableContainerChildType.SizeFlagsVertical = SizeFlags.ExpandFill;
-
-				// Add the new element, marking is as internal.
-				this.AddChild(newResizableContainerChildType, @internal: InternalMode.Front);
-
-				currentColumns += 1;
-			}
-
-			// If there are too many container children, remove resizable children until it is equal to the set column count.
-			while (currentColumns > this.ColumnCount) {
-				var containerChildren = GetChildContainers();
-
-				ResizableContainerChildType removeResizableContainerChild = null;
-				for (int i = containerChildren.Count; i >= 0; i++) {
-					var child = containerChildren[i];
-					if (child is ResizableContainerChildType resizableContainerChild) {
-						removeResizableContainerChild = resizableContainerChild;
-						break;
-					}
-				}
-
-				if (removeResizableContainerChild != null) {
-					removeResizableContainerChild.QueueFree();
-				} else {
-					break;
-				}
-
-				currentColumns -= 1;
-			}
+		if (this.ColumnCount != this.GetChildContainers().Count) {
+			RefreshColumns();
 		}
 	}
 
@@ -141,6 +117,44 @@ public partial class ResizableHContainer : HBoxContainer {
 					this.CanDrag = false;
 				}
 			}
+		}
+	}
+
+	public void RefreshColumns() {
+		int currentColumns = this.GetChildContainers().Count;
+
+		// If there are not enough container children, add new resizable children until it is equal to the set column count.
+		while (currentColumns < this.ColumnCount) {
+			var newResizableContainerChildType = new ResizableContainerChildType();
+			newResizableContainerChildType.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+			newResizableContainerChildType.SizeFlagsVertical = SizeFlags.ExpandFill;
+
+			// Add the new element, marking is as internal.
+			this.AddChild(newResizableContainerChildType, @internal: InternalMode.Front);
+
+			currentColumns += 1;
+		}
+
+		// If there are too many container children, remove resizable children until it is equal to the set column count.
+		while (currentColumns > this.ColumnCount) {
+			var containerChildren = this.GetChildContainers();
+
+			ResizableContainerChildType removeResizableContainerChild = null;
+			for (int i = containerChildren.Count - 1; i >= 0; i--) {
+				var child = containerChildren[i];
+				if (child is ResizableContainerChildType resizableContainerChild) {
+					removeResizableContainerChild = resizableContainerChild;
+					break;
+				}
+			}
+
+			if (removeResizableContainerChild != null) {
+				removeResizableContainerChild.QueueFree();
+			} else {
+				break;
+			}
+
+			currentColumns -= 1;
 		}
 	}
 

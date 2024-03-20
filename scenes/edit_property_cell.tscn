@@ -1,0 +1,3 @@
+[gd_scene format=3 uid="uid://bupg5rieul7qi"]
+
+[node name="editpropertycell" type="ConfirmationDialog"]

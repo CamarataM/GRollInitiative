@@ -24,6 +24,10 @@ public partial class GRollInitiative : Control {
 	[Export]
 	public Button PreviousCreatureButton;
 
+	[Export]
+	public ConfirmationDialog EditPropertyCellConfirmationDialog;
+	public static ConfirmationDialog StaticEditPropertyCellConfirmationDialog;
+
 	public string DefaultAvatarPath = "res://resources/test_avatar.png";
 	public string DefaultGalleryFolderPath = ProjectSettings.GlobalizePath("user://gallery");
 
@@ -61,9 +65,7 @@ public partial class GRollInitiative : Control {
 	public static readonly SlugHelper SlugHelper = new SlugHelper();
 
 	public override void _Ready() {
-		var creatureControl = new CreatureControl();
-		creatureControl.CustomMinimumSize = new Vector2(0, 100);
-		this.CreatureVBoxContainer.AddChild(creatureControl);
+		GRollInitiative.StaticEditPropertyCellConfirmationDialog = this.EditPropertyCellConfirmationDialog;
 
 		System.IO.Directory.CreateDirectory(DefaultGalleryFolderPath);
 
@@ -247,7 +249,7 @@ public partial class GRollInitiative : Control {
 
 		// TODO: Implement icon overlays for creature status (incapacitated, dead, etc).
 
-		// FillWithTestData();
+		FillWithTestData();
 	}
 
 	public override void _Process(double delta) {
@@ -454,16 +456,22 @@ public partial class GRollInitiative : Control {
 		// CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_3.png", "Anir", new Color(0, 0.5f, 0, 0.5f)), 16);
 		// CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_4.png", "Vampire 1", new Color(0.5f, 0, 0, 0.5f)), 14);
 
-		AddCreatureWindow.Visible = true;
+		// AddCreatureWindow.Visible = true;
 
-		AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text = "Vampire 2";
-		AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value = 19;
-		AddCreatureAvatarTextureRect.SetMeta(AVATAR_PATH_METADATA_KEY, "screenshots/avatars/rpg_characters_avatar_4.png");
-		AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY)));
-		TeamColorPickerButton.Color = new Color(0.5f, 0, 0, 0.5f);
+		// AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text = "Vampire 2";
+		// AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value = 19;
+		// AddCreatureAvatarTextureRect.SetMeta(AVATAR_PATH_METADATA_KEY, "screenshots/avatars/rpg_characters_avatar_4.png");
+		// AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY)));
+		// TeamColorPickerButton.Color = new Color(0.5f, 0, 0, 0.5f);
 
-		for (int i = 0; i < 15; i++) {
-			NextCreatureButton.EmitSignal(Button.SignalName.Pressed);
-		}
+		// for (int i = 0; i < 15; i++) {
+		// 	NextCreatureButton.EmitSignal(Button.SignalName.Pressed);
+		// }
+
+		var creatureControl = new CreatureControl();
+		creatureControl.CustomMinimumSize = new Vector2(0, 100);
+		creatureControl.ImagePath = "res://screenshots/avatars/rpg_characters_avatar_1.png";
+		creatureControl.CreatureName = "Ibris";
+		this.CreatureVBoxContainer.AddChild(creatureControl);
 	}
 }
