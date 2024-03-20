@@ -10,12 +10,14 @@ public partial class CreatureControl : ResizableHContainer {
 		NAME,
 		HEALTH,
 		INITIATIVE,
+		SPELL_SLOTS,
 	}
 
 	public List<CreatureProperty> CreaturePropertyColumnList = new List<CreatureProperty>() {
 		CreatureProperty.IMAGE,
 		CreatureProperty.NAME,
 		CreatureProperty.INITIATIVE,
+		CreatureProperty.SPELL_SLOTS,
 	};
 
 	private string _ImagePath = null;
@@ -83,11 +85,11 @@ public partial class CreatureControl : ResizableHContainer {
 	public void Render(CreatureProperty? creaturePropertyOverride = null) {
 		this.ColumnCount = CreaturePropertyColumnList.Count;
 
-		for (int i = 0; i < this.ColumnCount; i++) {
-			var creatureProperty = CreaturePropertyColumnList[i];
+		for (int columnIndex = 0; columnIndex < this.ColumnCount; columnIndex++) {
+			var creatureProperty = CreaturePropertyColumnList[columnIndex];
 
 			// Clear the previous signals for callable.
-			var panelContainer = this.GetChildContainers()[i];
+			var panelContainer = this.GetChildContainers()[columnIndex];
 			foreach (var signalConnectionDictionary in panelContainer.GetSignalConnectionList(PanelContainer.SignalName.GuiInput)) {
 				var callable = signalConnectionDictionary["callable"];
 				panelContainer.Disconnect(PanelContainer.SignalName.GuiInput, (Callable) callable);
@@ -138,9 +140,6 @@ public partial class CreatureControl : ResizableHContainer {
 								break;
 						}
 
-						// Focus the new property input control.
-						// GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<Control>(0).GrabFocus();
-
 						// Clear the previous signals for callable.
 						foreach (var signalConnectionDictionary in GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetSignalConnectionList(ConfirmationDialog.SignalName.Confirmed)) {
 							var callable = signalConnectionDictionary["callable"];
@@ -167,7 +166,6 @@ public partial class CreatureControl : ResizableHContainer {
 							}
 						};
 
-						// GRollInitiative.StaticEditPropertyCellConfirmationDialog.Position = (Vector2I) (GetWindow().Position + inputEventMouseButton.GlobalPosition - new Vector2(GRollInitiative.StaticEditPropertyCellConfirmationDialog.Size.X / 2, 0));
 						GRollInitiative.StaticEditPropertyCellConfirmationDialog.Position = (Vector2I) (GetWindow().Position + inputEventMouseButton.GlobalPosition - (GRollInitiative.StaticEditPropertyCellConfirmationDialog.Size / 2) + new Vector2(0, 30));
 						GRollInitiative.StaticEditPropertyCellConfirmationDialog.Show();
 					}
@@ -180,25 +178,27 @@ public partial class CreatureControl : ResizableHContainer {
 				switch (creatureProperty) {
 					case CreatureProperty.IMAGE:
 						if (ImagePath != null) {
-							TextureRect textureRect = new TextureRect();
+							var imageTextureRect = new TextureRect();
+							imageTextureRect.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
+							imageTextureRect.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
 
 							if (System.IO.File.Exists(ProjectSettings.GlobalizePath(ImagePath))) {
-								textureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(ImagePath));
+								imageTextureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(ImagePath));
 							} else {
 								// TODO: Implement better invalid image texture.
-								textureRect.Texture = new PlaceholderTexture2D();
+								imageTextureRect.Texture = new PlaceholderTexture2D();
 								GD.PrintErr("Path '" + ImagePath + "' does not exist.");
 							}
 
-							textureRect.SetMeta(IMAGE_PATH_METADATA_KEY, ImagePath);
+							imageTextureRect.SetMeta(IMAGE_PATH_METADATA_KEY, ImagePath);
 
-							panelContainer.AddChild(textureRect);
+							panelContainer.AddChild(imageTextureRect);
 						}
 
 						break;
 					case CreatureProperty.NAME:
 						if (CreatureName != null) {
-							Label nameLabel = new Label();
+							var nameLabel = new Label();
 							nameLabel.Text = CreatureName;
 
 							panelContainer.AddChild(nameLabel);
@@ -206,17 +206,35 @@ public partial class CreatureControl : ResizableHContainer {
 
 						break;
 					case CreatureProperty.HEALTH:
-						Label healthLabel = new Label();
+						var healthLabel = new Label();
 						healthLabel.Text = "HP: " + Health.ToString();
 
 						panelContainer.AddChild(healthLabel);
 
 						break;
 					case CreatureProperty.INITIATIVE:
-						Label initiativeLabel = new Label();
+						var initiativeLabel = new Label();
 						initiativeLabel.Text = "Initiative: " + Initiative.ToString();
 
 						panelContainer.AddChild(initiativeLabel);
+
+						break;
+					case CreatureProperty.SPELL_SLOTS:
+						var spellSlotsHFlowContainer = new HFlowContainer();
+
+						for (int i = 0; i < 9; i++) {
+							var spellSlotHBoxContainer = new HBoxContainer();
+
+							// spellSlotHBoxContainer.AddChild(new Label() {
+							// 	Text = (i + 1).ToString(),
+							// });
+
+							spellSlotHBoxContainer.AddChild(new SpinBox());
+
+							spellSlotsHFlowContainer.AddChild(spellSlotHBoxContainer);
+						}
+
+						panelContainer.AddChild(spellSlotsHFlowContainer);
 
 						break;
 					default:
