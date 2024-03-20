@@ -96,8 +96,11 @@ public partial class CreatureControl : ResizableHContainer {
 			panelContainer.GuiInput += (InputEvent @event) => {
 				if (@event is InputEventMouseButton inputEventMouseButton) {
 					if (inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left && inputEventMouseButton.DoubleClick) {
+						// Remove all previous input children on the confirmation dialog.
 						RemoveAllChildren(GRollInitiative.StaticEditPropertyCellConfirmationDialog);
 
+						// Based on the current creature property for the panel container, add a new input control.
+						// TODO: Reuse previous elements, remaking them if applicable.
 						switch (creatureProperty) {
 							case CreatureProperty.IMAGE:
 							case CreatureProperty.NAME:
@@ -106,6 +109,11 @@ public partial class CreatureControl : ResizableHContainer {
 								lineEdit.TextSubmitted += (string newText) => {
 									GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
 								};
+
+								// Grab the focus in the next frame (cannot this frame, as the lineEdit doesn't exist).
+								lineEdit.CallDeferred(LineEdit.MethodName.GrabFocus);
+								// Set the caret column to the final character (expected location for a text edit box).
+								lineEdit.CaretColumn = lineEdit.Text.Length;
 
 								GRollInitiative.StaticEditPropertyCellConfirmationDialog.AddChild(lineEdit);
 								break;
@@ -118,12 +126,20 @@ public partial class CreatureControl : ResizableHContainer {
 									GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
 								};
 
+								// Grab the focus in the next frame (cannot this frame, as the lineEdit doesn't exist).
+								spinBox.GetLineEdit().CallDeferred(LineEdit.MethodName.GrabFocus);
+								// Set the caret column to the final character (expected location for a text edit box).
+								spinBox.GetLineEdit().CaretColumn = spinBox.GetLineEdit().Text.Length;
+
 								GRollInitiative.StaticEditPropertyCellConfirmationDialog.AddChild(spinBox);
 								break;
 							default:
 								GD.PrintErr("Unhandled CreatureProperty '" + creatureProperty + "'");
 								break;
 						}
+
+						// Focus the new property input control.
+						// GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<Control>(0).GrabFocus();
 
 						// Clear the previous signals for callable.
 						foreach (var signalConnectionDictionary in GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetSignalConnectionList(ConfirmationDialog.SignalName.Confirmed)) {
@@ -151,7 +167,8 @@ public partial class CreatureControl : ResizableHContainer {
 							}
 						};
 
-						GRollInitiative.StaticEditPropertyCellConfirmationDialog.Position = (Vector2I) (GetWindow().Position + inputEventMouseButton.GlobalPosition);
+						// GRollInitiative.StaticEditPropertyCellConfirmationDialog.Position = (Vector2I) (GetWindow().Position + inputEventMouseButton.GlobalPosition - new Vector2(GRollInitiative.StaticEditPropertyCellConfirmationDialog.Size.X / 2, 0));
+						GRollInitiative.StaticEditPropertyCellConfirmationDialog.Position = (Vector2I) (GetWindow().Position + inputEventMouseButton.GlobalPosition - (GRollInitiative.StaticEditPropertyCellConfirmationDialog.Size / 2) + new Vector2(0, 30));
 						GRollInitiative.StaticEditPropertyCellConfirmationDialog.Show();
 					}
 				}
@@ -164,7 +181,15 @@ public partial class CreatureControl : ResizableHContainer {
 					case CreatureProperty.IMAGE:
 						if (ImagePath != null) {
 							TextureRect textureRect = new TextureRect();
-							textureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(ImagePath));
+
+							if (System.IO.File.Exists(ProjectSettings.GlobalizePath(ImagePath))) {
+								textureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(ImagePath));
+							} else {
+								// TODO: Implement better invalid image texture.
+								textureRect.Texture = new PlaceholderTexture2D();
+								GD.PrintErr("Path '" + ImagePath + "' does not exist.");
+							}
+
 							textureRect.SetMeta(IMAGE_PATH_METADATA_KEY, ImagePath);
 
 							panelContainer.AddChild(textureRect);
