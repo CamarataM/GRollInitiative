@@ -77,6 +77,7 @@ public partial class CreatureControl : ResizableHContainer {
 
 	// Need a default constructor for Godot to be able to make the Node.
 	public CreatureControl() {
+		this.ImagePath = "";
 		this.ColumnCount = 5;
 
 		this.CallDeferred(CreatureControl.MethodName.Render);
@@ -294,32 +295,37 @@ public partial class CreatureControl : ResizableHContainer {
 
 				switch (creatureProperty) {
 					case CreatureProperty.IMAGE:
-						if (ImagePath != null) {
-							var imageTextureRect = new TextureRect();
-							imageTextureRect.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
-							imageTextureRect.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
+						var imageTextureRect = new TextureRect();
+						imageTextureRect.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
+						imageTextureRect.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
 
+						bool setImagePath = false;
+						if (ImagePath != null && ImagePath.Trim().Length > 0) {
 							if (System.IO.File.Exists(ProjectSettings.GlobalizePath(ImagePath))) {
 								imageTextureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(ImagePath));
-							} else {
-								// TODO: Implement better invalid image texture.
-								imageTextureRect.Texture = new PlaceholderTexture2D();
-								GD.PrintErr("Path '" + ImagePath + "' does not exist.");
+								setImagePath = true;
 							}
-
-							imageTextureRect.SetMeta(IMAGE_PATH_METADATA_KEY, ImagePath);
-
-							panelContainer.AddChild(imageTextureRect);
 						}
+
+						if (!setImagePath) {
+							// TODO: Implement better invalid image texture.
+							imageTextureRect.Texture = new PlaceholderTexture2D();
+							GD.PrintErr("Path '" + ImagePath + "' does not exist.");
+						}
+
+						imageTextureRect.SetMeta(IMAGE_PATH_METADATA_KEY, ImagePath);
+
+						panelContainer.AddChild(imageTextureRect);
 
 						break;
 					case CreatureProperty.NAME:
-						if (CreatureName != null) {
-							var nameLabel = new Label();
-							nameLabel.Text = CreatureName;
+						var nameLabel = new Label();
 
-							panelContainer.AddChild(nameLabel);
+						if (CreatureName != null) {
+							nameLabel.Text = CreatureName;
 						}
+
+						panelContainer.AddChild(nameLabel);
 
 						break;
 					case CreatureProperty.HEALTH:

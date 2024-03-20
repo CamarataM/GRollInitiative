@@ -94,12 +94,15 @@ public partial class GRollInitiative : Control {
 
 		// Handle visibility toggle.
 		AddCreatureToggleWindowButton.Pressed += () => {
-			AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(GD.Load<Image>(DefaultAvatarPath));
+			// AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(GD.Load<Image>(DefaultAvatarPath));
 
-			AddCreatureButton.Visible = true;
-			EditCreatureButton.Visible = false;
+			// AddCreatureButton.Visible = true;
+			// EditCreatureButton.Visible = false;
 
-			AddCreatureWindow.Visible = !AddCreatureWindow.Visible;
+			// AddCreatureWindow.Visible = !AddCreatureWindow.Visible;
+			var creatureControl = new CreatureControl();
+			creatureControl.CustomMinimumSize = new Vector2(0, 100);
+			this.CreatureVBoxContainer.AddChild(creatureControl);
 		};
 
 		// Handle close button pressed by hiding visibility of the window.
@@ -265,6 +268,18 @@ public partial class GRollInitiative : Control {
 
 		EditableCooldown -= delta;
 		EditableDebounce -= delta;
+
+		// Check that each creature control is not greater than the width of the creature scroll container. If it is, reset it to it's minimum size.
+		foreach (var child in this.CreatureVBoxContainer.GetChildren()) {
+			if (child is CreatureControl creatureControl) {
+				if (creatureControl.Size.X > this.CreatureVBoxContainer.GetParent<ScrollContainer>().Size.X) {
+					foreach (var container in creatureControl.GetChildContainers()) {
+						container.CustomMinimumSize = container.GetMinimumSize();
+						container.Size = new Vector2(0, 0);
+					}
+				}
+			}
+		}
 	}
 
 	public string GetCreatureResourceFilePath(CreatureResource creatureResource) {

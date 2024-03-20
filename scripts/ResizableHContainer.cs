@@ -65,8 +65,8 @@ public partial class ResizableHContainer : HBoxContainer {
 					leftDraggingContainerNewMinimumSize = this.LeftDraggingContainer.CustomMinimumSize + new Vector2(inputEventMouseMotion.Relative.X, 0);
 					rightDraggingContainerNewMinimumSize = this.RightDraggingContainer.CustomMinimumSize - new Vector2(inputEventMouseMotion.Relative.X, 0);
 
-					// Needed to prevent a scrollbar being created due to one element not being shrunk due to hitting a hard minimum size limit (8px x 8px) while the other one continuously grows. See: https://github.com/godotengine/godot/issues/35005.
-					if (leftDraggingContainerNewMinimumSize.X >= 8 && leftDraggingContainerNewMinimumSize.Y >= 8 && rightDraggingContainerNewMinimumSize.X >= 8 && rightDraggingContainerNewMinimumSize.Y >= 8) {
+					// Ensure the new minimum size values are greater than both the containers minimum size. If they are not, do not change the containers size.
+					if (leftDraggingContainerNewMinimumSize >= LeftDraggingContainer.GetMinimumSize() && rightDraggingContainerNewMinimumSize >= RightDraggingContainer.GetMinimumSize()) {
 						this.LeftDraggingContainer.CustomMinimumSize = leftDraggingContainerNewMinimumSize;
 						this.RightDraggingContainer.CustomMinimumSize = rightDraggingContainerNewMinimumSize;
 					}
