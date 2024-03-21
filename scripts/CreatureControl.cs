@@ -15,6 +15,19 @@ public partial class CreatureControl : ResizableHContainer {
 		SPELL_SLOTS,
 	}
 
+	public partial class SpellSlotData : Resource {
+		public int SpellSlotIndex;
+		public int SpellSlotAmount;
+
+		public SpellSlotData() {
+		}
+
+		public SpellSlotData(int spellSlotIndex, int spellSlotAmount = 0) {
+			this.SpellSlotIndex = spellSlotIndex;
+			this.SpellSlotAmount = spellSlotAmount;
+		}
+	}
+
 	public List<CreatureProperty> CreaturePropertyColumnList = new List<CreatureProperty>() {
 		CreatureProperty.IMAGE,
 		CreatureProperty.NAME,
@@ -80,12 +93,12 @@ public partial class CreatureControl : ResizableHContainer {
 		}
 	}
 
-	private Godot.Collections.Array<bool> _EnabledSpellSlots = new Godot.Collections.Array<bool>();
+	private Godot.Collections.Array<SpellSlotData> _SpellSlots = new Godot.Collections.Array<SpellSlotData>();
 	[Export]
-	public Godot.Collections.Array<bool> EnabledSpellSlots {
-		get => _EnabledSpellSlots;
+	public Godot.Collections.Array<SpellSlotData> SpellSlots3 {
+		get => _SpellSlots;
 		set {
-			_EnabledSpellSlots = value;
+			_SpellSlots = value;
 
 			Render(CreatureProperty.SPELL_SLOTS);
 		}
@@ -201,20 +214,18 @@ public partial class CreatureControl : ResizableHContainer {
 								var spellSlotsCheckButtonVBoxContainer = new VBoxContainer();
 
 								var addButtonAmountSpinbox = new SpinBox();
-								addButtonAmountSpinbox.Value = 9;
+								addButtonAmountSpinbox.Value = 1;
 
 								HBoxContainer CreateSpellSlotContainer() {
 									// Create a HBoxContainer which will contain the SwitchButton and the delete button for the spell slot.
 									var spellSlotsEnabledContainer = new HBoxContainer();
-									spellSlotsEnabledContainer.AddChild(new CheckButton());
+									spellSlotsEnabledContainer.AddChild(new SpinBox());
 
 									var deleteButton = new Button();
 									deleteButton.Text = "X";
 									deleteButton.Pressed += () => {
 										deleteButton.GetParent().QueueFree();
 										deleteButton.GetParent().GetParent().RemoveChild(deleteButton.GetParent());
-
-										RefreshIndexes();
 									};
 
 									spellSlotsEnabledContainer.AddChild(deleteButton);
@@ -224,24 +235,11 @@ public partial class CreatureControl : ResizableHContainer {
 									return spellSlotsEnabledContainer;
 								}
 
-								// Set the indexes of the spell slot CheckButtons based on their index in the children list of their parent VBoxContainer.
-								void RefreshIndexes() {
-									int spellSlotIndex = 0;
-									foreach (var child in spellSlotsCheckButtonVBoxContainer.GetChildren()) {
-										if (child is HBoxContainer hBoxContainer) {
-											hBoxContainer.GetChild<CheckButton>(0).Text = "Slot " + (spellSlotIndex + 1);
-
-											spellSlotIndex += 1;
-										}
-									}
-								}
-
 								// Add any existing spell slots for the current creature.
-								foreach (var enabledSlot in this.EnabledSpellSlots) {
+								foreach (var spellSlotData in this.SpellSlots3) {
 									var spellSlotContainer = CreateSpellSlotContainer();
-									spellSlotContainer.GetChild<CheckButton>(0).ButtonPressed = enabledSlot;
+									spellSlotContainer.GetChild<SpinBox>(0).Value = spellSlotData.SpellSlotIndex;
 								}
-								RefreshIndexes();
 
 								var addButton = new Button();
 								addButton.Text = "Add";
@@ -249,8 +247,6 @@ public partial class CreatureControl : ResizableHContainer {
 									for (int amountToAdd = 0; amountToAdd < addButtonAmountSpinbox.Value; amountToAdd++) {
 										CreateSpellSlotContainer();
 									}
-
-									RefreshIndexes();
 								};
 
 								var deleteAllButton = new Button();
@@ -297,27 +293,34 @@ public partial class CreatureControl : ResizableHContainer {
 									this.Initiative = (int) GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
 									break;
 								case CreatureProperty.SPELL_SLOTS:
-									this.EnabledSpellSlots.Clear();
+									var newSpellSlotDataArray = new Godot.Collections.Array<SpellSlotData>();
 
-									// Iterate each spell slot container, checking if it is checked or not, setting that index value into the EnabledSpellSlots Array.
+									// Iterate each spell slot container, checking if it is checked or not, adding a new SpellSlotData class to the array for any unhandled.
 									foreach (var child in GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<VBoxContainer>(0).GetChildren()) {
 										if (child is VBoxContainer) {
-											int spellSlotIndex = 0;
 											foreach (var spellSlotParentContainerChild in child.GetChildren()) {
 												if (spellSlotParentContainerChild is HBoxContainer hBoxContainer) {
-													var checkButton = hBoxContainer.GetChild<CheckButton>(0);
+													var spellSlotIndex = (int) spellSlotParentContainerChild.GetChild<SpinBox>(0).Value;
 
-													if (spellSlotIndex >= this.EnabledSpellSlots.Count) {
-														this.EnabledSpellSlots.Add(checkButton.ButtonPressed);
-													} else {
-														this.EnabledSpellSlots[spellSlotIndex] = checkButton.ButtonPressed;
+													SpellSlotData existingSpellSlotData = null;
+													foreach (var spellSlotData in this.SpellSlots3) {
+														if (spellSlotData.SpellSlotIndex == spellSlotIndex) {
+															existingSpellSlotData = spellSlotData;
+															break;
+														}
 													}
 
-													spellSlotIndex += 1;
+													if (existingSpellSlotData == null) {
+														newSpellSlotDataArray.Add(new SpellSlotData(spellSlotIndex));
+													} else {
+														newSpellSlotDataArray.Add(existingSpellSlotData);
+													}
 												}
 											}
 										}
 									}
+
+									this.SpellSlots3 = newSpellSlotDataArray;
 
 									Render();
 
@@ -401,25 +404,14 @@ public partial class CreatureControl : ResizableHContainer {
 
 						bool haveEnabledSpellSlots = false;
 
+						var spellSlotControlList = new List<SpellSlotControl>();
 						// Set the spell slot text and update the visibility based on whether the spell slot is enabled or not.
-						for (int i = 0; i < EnabledSpellSlots.Count; i++) {
-							var spellSlotHBoxContainer = new HBoxContainer();
+						foreach (var spellSlotData in this.SpellSlots3) {
+							var newSpellSlotControl = new SpellSlotControl(spellSlotIndex: spellSlotData.SpellSlotIndex, spellSlotAmount: spellSlotData.SpellSlotAmount);
+							spellSlotsHFlowContainer.AddChild(newSpellSlotControl);
+							spellSlotControlList.Add(newSpellSlotControl);
 
-							spellSlotHBoxContainer.AddChild(new Label() {
-								Text = (i + 1).ToString(),
-							});
-
-							var spellSlotSpinBox = new SpinBox();
-							spellSlotSpinBox.SetMeta(SPELL_SLOT_INDEX_METADATA_KEY, i + 1);
-							spellSlotHBoxContainer.AddChild(spellSlotSpinBox);
-
-							// Set the visibility of the spell slot container to be equal to whether the spell slot is enabled or not.
-							spellSlotHBoxContainer.Visible = EnabledSpellSlots[i];
-							if (spellSlotHBoxContainer.Visible) {
-								haveEnabledSpellSlots = true;
-							}
-
-							spellSlotsHFlowContainer.AddChild(spellSlotHBoxContainer);
+							haveEnabledSpellSlots = true;
 						}
 
 						// Check if we have any visible children. If not, add a label which states that we have no spell slots in the container.
@@ -429,6 +421,13 @@ public partial class CreatureControl : ResizableHContainer {
 								HorizontalAlignment = HorizontalAlignment.Center,
 								VerticalAlignment = VerticalAlignment.Center,
 							});
+						}
+
+						// Sort from greatest SpellSlotIndex to least.
+						spellSlotControlList.Sort((a, b) => { return a.SpellSlotIndex.CompareTo(b.SpellSlotIndex); });
+						// For each control in the sorted list, move that control to the front.
+						foreach (var spellSlotControl in spellSlotControlList) {
+							spellSlotControl.MoveToFront();
 						}
 
 						panelContainer.AddChild(spellSlotsHFlowContainer);
@@ -442,38 +441,13 @@ public partial class CreatureControl : ResizableHContainer {
 		}
 	}
 
-	public List<SpinBox> GetSpellSlotSpinBoxes() {
-		var returnList = new List<SpinBox>();
+	// public List<SpellSlotControl> GetSpellSlotControls() {
+	// 	var returnList = new List<SpinBox>();
 
-		this.ColumnCount = CreaturePropertyColumnList.Count;
+	// 	foreach (var control in )
 
-		for (int columnIndex = 0; columnIndex < this.ColumnCount; columnIndex++) {
-			var creatureProperty = CreaturePropertyColumnList[columnIndex];
-
-			if (creatureProperty == CreatureProperty.SPELL_SLOTS) {
-				var panelContainer = this.GetChildContainers()[columnIndex];
-
-				foreach (var child in panelContainer.GetChild<HFlowContainer>(0).GetChildren()) {
-					if (child is HBoxContainer hBoxContainer) {
-						foreach (var hBoxContainerChild in hBoxContainer.GetChildren()) {
-							if (hBoxContainerChild is SpinBox spinBox) {
-								var spellSlotIndex = spinBox.GetMeta(SPELL_SLOT_INDEX_METADATA_KEY).AsInt32();
-								for (int i = 0; i <= spellSlotIndex; i++) {
-									if (i > returnList.Count) {
-										returnList.Add(null);
-									}
-								}
-
-								returnList[spellSlotIndex - 1] = spinBox;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return returnList;
-	}
+	// 		return returnList;
+	// }
 
 	public Variant? GetVariantFromPanelContainer(PanelContainer panelContainer) {
 		Variant? returnValue = null;

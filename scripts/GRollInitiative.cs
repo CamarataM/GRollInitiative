@@ -443,10 +443,10 @@ public partial class GRollInitiative : Control {
 	public void FillWithTestData() {
 		GD.PrintErr("!!! TEST DATA FILLED, APPLICATION WILL NOT WORK AS EXPECTED WITH MANUAL INPUT !!!");
 
-		var testCreatureNameToImageToTeamColorToInitiativeTupleList = new List<(string Name, string ImagePath, Color TeamColor, int Initiative, List<int> SpellSlots)>() {
+		var testCreatureNameToImageToTeamColorToInitiativeTupleList = new List<(string Name, string ImagePath, Color TeamColor, int Initiative, Godot.Collections.Array<CreatureControl.SpellSlotData> SpellSlots)>() {
 			("Ibris", "screenshots/avatars/rpg_characters_avatar_1.png", new Color(0, 0.5f, 0, 0.5f), 12, null),
-			("Ejun", "screenshots/avatars/rpg_characters_avatar_2.png", new Color(0, 0.5f, 0, 0.5f), 6, new List<int>(){
-				4, 2, 1, 1
+			("Ejun", "screenshots/avatars/rpg_characters_avatar_2.png", new Color(0, 0.5f, 0, 0.5f), 6, new Godot.Collections.Array<CreatureControl.SpellSlotData>(){
+				new CreatureControl.SpellSlotData(0, 4), new CreatureControl.SpellSlotData(1, 2), new CreatureControl.SpellSlotData(2, 1), new CreatureControl.SpellSlotData(3, 1),
 			}),
 			("Anir", "screenshots/avatars/rpg_characters_avatar_3.png", new Color(0, 0.5f, 0, 0.5f), 16, null),
 			("Vampire 1", "screenshots/avatars/rpg_characters_avatar_4.png", new Color(0.5f, 0, 0, 0.5f), 14, null),
@@ -460,22 +460,23 @@ public partial class GRollInitiative : Control {
 			creatureControl.Initiative = creatureTuple.Initiative;
 
 			if (creatureTuple.SpellSlots != null) {
-				for (int i = 0; i < creatureTuple.SpellSlots.Count; i++) {
-					creatureControl.EnabledSpellSlots.Add(creatureTuple.SpellSlots[i] != null && creatureTuple.SpellSlots[i] != -1);
-				}
-
+				creatureControl.SpellSlots3 = creatureTuple.SpellSlots;
 				creatureControl.Render();
 
-				var spellSlotSpinBoxes = creatureControl.GetSpellSlotSpinBoxes();
-				for (int i = 0; i < spellSlotSpinBoxes.Count; i++) {
-					var spellSlotSpinBox = spellSlotSpinBoxes[i];
-					if (spellSlotSpinBoxes != null) {
-						GD.Print(spellSlotSpinBox);
-						GD.Print(creatureTuple.SpellSlots[i]);
-						spellSlotSpinBox.SetDeferred(SpinBox.PropertyName.Value, creatureTuple.SpellSlots[i]);
-						// spellSlotSpinBox.Value = creatureTuple.SpellSlots[i];
-					}
-				}
+				// 	for (int i = 0; i < creatureTuple.SpellSlots.Count; i++) {
+				// 		creatureControl.EnabledSpellSlots.Add(creatureTuple.SpellSlots[i] != null && creatureTuple.SpellSlots[i] != -1);
+				// 	}
+
+				// 	creatureControl.Render();
+
+				// 	var spellSlotSpinBoxes = creatureControl.GetSpellSlotSpinBoxes();
+				// 	for (int i = 0; i < spellSlotSpinBoxes.Count; i++) {
+				// 		var spellSlotSpinBox = spellSlotSpinBoxes[i];
+				// 		if (spellSlotSpinBoxes != null) {
+				// 			spellSlotSpinBox.SetDeferred(SpinBox.PropertyName.Value, creatureTuple.SpellSlots[i]);
+				// 			// spellSlotSpinBox.Value = creatureTuple.SpellSlots[i];
+				// 		}
+				// 	}
 			}
 		}
 
