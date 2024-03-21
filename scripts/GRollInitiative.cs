@@ -102,6 +102,12 @@ public partial class GRollInitiative : Control {
 			var creatureControl = new CreatureControl();
 			creatureControl.CustomMinimumSize = new Vector2(0, 100);
 			this.CreatureVBoxContainer.AddChild(creatureControl);
+
+			creatureControl.InitiativeChanged += (_, newValue) => {
+				this.CallDeferred(GRollInitiative.MethodName.UpdateUI);
+			};
+
+			UpdateUI();
 		};
 
 		// Handle close button pressed by hiding visibility of the window.
@@ -405,28 +411,21 @@ public partial class GRollInitiative : Control {
 	}
 
 	public void UpdateUI() {
-		// foreach (var treeItem in Tree.GetRoot().GetChildren()) {
-		// 	// Set the current metadata value from the text value. If the value cannot be parsed, set the text to the previous metadata value.
-		// 	if (double.TryParse(treeItem.GetText(2), out double parsedValue)) {
-		// 		treeItem.SetMetadata(2, parsedValue);
-		// 	} else {
-		// 		treeItem.SetText(2, treeItem.GetMetadata(2).ToString());
-		// 	}
+		var creatureControlList = new List<CreatureControl>();
+		foreach (var child in this.CreatureVBoxContainer.GetChildren()) {
+			if (child is CreatureControl creatureControl) {
+				creatureControlList.Add(creatureControl);
+			}
+		}
 
-		// 	treeItem.SetCustomBgColor(0, ((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY)).TeamColor);
-
-		// 	for (int i = 0; i < treeItem.GetParent().GetChildCount(); i++) {
-		// 		var prevTreeItem = treeItem.GetPrevInTree();
-
-		// 		if (prevTreeItem == null || prevTreeItem == treeItem) {
-		// 			break;
-		// 		}
-
-		// 		if ((double) treeItem.GetMetadata(2) > (double) prevTreeItem.GetMetadata(2)) {
-		// 			treeItem.MoveBefore(prevTreeItem);
-		// 		}
-		// 	}
-		// }
+		// Sort from greatest initiative to least.
+		creatureControlList.Sort((a, b) => { return a.Initiative.CompareTo(b.Initiative); });
+		// Reverse the order of the initiative list.
+		creatureControlList.Reverse();
+		// For each control in the sorted list, move that control to the front.
+		foreach (var creatureControl in creatureControlList) {
+			creatureControl.MoveToFront();
+		}
 
 		if (ActiveCreatureControl != null) {
 			HighlightTreeItem(ActiveCreatureControl);

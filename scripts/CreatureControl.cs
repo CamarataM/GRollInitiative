@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 
@@ -69,7 +70,10 @@ public partial class CreatureControl : ResizableHContainer {
 	public int Initiative {
 		get => _Initiative;
 		set {
+			OnInitiativeChanged(value);
+
 			_Initiative = value;
+
 
 			Render(CreatureProperty.INITIATIVE);
 		}
@@ -84,6 +88,11 @@ public partial class CreatureControl : ResizableHContainer {
 
 			Render(CreatureProperty.SPELL_SLOTS);
 		}
+	}
+
+	public event EventHandler<int> InitiativeChanged;
+	protected virtual void OnInitiativeChanged(int newValue) {
+		InitiativeChanged?.Invoke(this, newValue);
 	}
 
 	// Need a default constructor for Godot to be able to make the Node.
