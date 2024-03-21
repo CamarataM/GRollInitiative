@@ -5,6 +5,7 @@ using Godot;
 [GlobalClass]
 public partial class CreatureControl : ResizableHContainer {
 	public const string IMAGE_PATH_METADATA_KEY = "image_path";
+	public const string SPELL_SLOT_INDEX_METADATA_KEY = "spell_slot_index";
 
 	public enum CreatureProperty {
 		IMAGE,
@@ -408,7 +409,9 @@ public partial class CreatureControl : ResizableHContainer {
 								Text = (i + 1).ToString(),
 							});
 
-							spellSlotHBoxContainer.AddChild(new SpinBox());
+							var spellSlotSpinBox = new SpinBox();
+							spellSlotSpinBox.SetMeta(SPELL_SLOT_INDEX_METADATA_KEY, i + 1);
+							spellSlotHBoxContainer.AddChild(spellSlotSpinBox);
 
 							// Set the visibility of the spell slot container to be equal to whether the spell slot is enabled or not.
 							spellSlotHBoxContainer.Visible = EnabledSpellSlots[i];
@@ -437,6 +440,39 @@ public partial class CreatureControl : ResizableHContainer {
 				}
 			}
 		}
+	}
+
+	public List<SpinBox> GetSpellSlotSpinBoxes() {
+		var returnList = new List<SpinBox>();
+
+		this.ColumnCount = CreaturePropertyColumnList.Count;
+
+		for (int columnIndex = 0; columnIndex < this.ColumnCount; columnIndex++) {
+			var creatureProperty = CreaturePropertyColumnList[columnIndex];
+
+			if (creatureProperty == CreatureProperty.SPELL_SLOTS) {
+				var panelContainer = this.GetChildContainers()[columnIndex];
+
+				foreach (var child in panelContainer.GetChild<HFlowContainer>(0).GetChildren()) {
+					if (child is HBoxContainer hBoxContainer) {
+						foreach (var hBoxContainerChild in hBoxContainer.GetChildren()) {
+							if (hBoxContainerChild is SpinBox spinBox) {
+								var spellSlotIndex = spinBox.GetMeta(SPELL_SLOT_INDEX_METADATA_KEY).AsInt32();
+								for (int i = 0; i <= spellSlotIndex; i++) {
+									if (i > returnList.Count) {
+										returnList.Add(null);
+									}
+								}
+
+								returnList[spellSlotIndex - 1] = spinBox;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return returnList;
 	}
 
 	public Variant? GetVariantFromPanelContainer(PanelContainer panelContainer) {

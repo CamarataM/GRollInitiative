@@ -443,25 +443,44 @@ public partial class GRollInitiative : Control {
 	public void FillWithTestData() {
 		GD.PrintErr("!!! TEST DATA FILLED, APPLICATION WILL NOT WORK AS EXPECTED WITH MANUAL INPUT !!!");
 
-		// CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_1.png", "Ibris", new Color(0, 0.5f, 0, 0.5f)), 12);
-		// CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_2.png", "Ejun", new Color(0, 0.5f, 0, 0.5f)), 6);
-		// CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_3.png", "Anir", new Color(0, 0.5f, 0, 0.5f)), 16);
-		// CreateInitiativeTreeItemFromCreatureResource(new CreatureResource("screenshots/avatars/rpg_characters_avatar_4.png", "Vampire 1", new Color(0.5f, 0, 0, 0.5f)), 14);
+		var testCreatureNameToImageToTeamColorToInitiativeTupleList = new List<(string Name, string ImagePath, Color TeamColor, int Initiative, List<int> SpellSlots)>() {
+			("Ibris", "screenshots/avatars/rpg_characters_avatar_1.png", new Color(0, 0.5f, 0, 0.5f), 12, null),
+			("Ejun", "screenshots/avatars/rpg_characters_avatar_2.png", new Color(0, 0.5f, 0, 0.5f), 6, new List<int>(){
+				4, 2, 1, 1
+			}),
+			("Anir", "screenshots/avatars/rpg_characters_avatar_3.png", new Color(0, 0.5f, 0, 0.5f), 16, null),
+			("Vampire 1", "screenshots/avatars/rpg_characters_avatar_4.png", new Color(0.5f, 0, 0, 0.5f), 14, null),
+		};
 
-		// AddCreatureWindow.Visible = true;
+		foreach (var creatureTuple in testCreatureNameToImageToTeamColorToInitiativeTupleList) {
+			var creatureControl = CreateAndAddCreatureControl();
+			creatureControl.CreatureName = creatureTuple.Name;
+			creatureControl.ImagePath = creatureTuple.ImagePath;
+			creatureControl.TeamColor = creatureTuple.TeamColor;
+			creatureControl.Initiative = creatureTuple.Initiative;
 
-		// AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text = "Vampire 2";
-		// AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value = 19;
-		// AddCreatureAvatarTextureRect.SetMeta(AVATAR_PATH_METADATA_KEY, "screenshots/avatars/rpg_characters_avatar_4.png");
-		// AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY)));
-		// TeamColorPickerButton.Color = new Color(0.5f, 0, 0, 0.5f);
+			if (creatureTuple.SpellSlots != null) {
+				for (int i = 0; i < creatureTuple.SpellSlots.Count; i++) {
+					creatureControl.EnabledSpellSlots.Add(creatureTuple.SpellSlots[i] != null && creatureTuple.SpellSlots[i] != -1);
+				}
 
-		// for (int i = 0; i < 15; i++) {
-		// 	NextCreatureButton.EmitSignal(Button.SignalName.Pressed);
-		// }
+				creatureControl.Render();
 
-		var creatureControl = CreateAndAddCreatureControl();
-		creatureControl.ImagePath = "res://screenshots/avatars/rpg_characters_avatar_1.png";
-		creatureControl.CreatureName = "Ibris";
+				var spellSlotSpinBoxes = creatureControl.GetSpellSlotSpinBoxes();
+				for (int i = 0; i < spellSlotSpinBoxes.Count; i++) {
+					var spellSlotSpinBox = spellSlotSpinBoxes[i];
+					if (spellSlotSpinBoxes != null) {
+						GD.Print(spellSlotSpinBox);
+						GD.Print(creatureTuple.SpellSlots[i]);
+						spellSlotSpinBox.SetDeferred(SpinBox.PropertyName.Value, creatureTuple.SpellSlots[i]);
+						// spellSlotSpinBox.Value = creatureTuple.SpellSlots[i];
+					}
+				}
+			}
+		}
+
+		for (int i = 0; i < 15; i++) {
+			NextCreatureButton.EmitSignal(Button.SignalName.Pressed);
+		}
 	}
 }
