@@ -219,14 +219,27 @@ public partial class GRollInitiative : Control {
 				AddChild(ClearAllCreaturesConfirmationDialog);
 
 				ClearAllCreaturesConfirmationDialog.Confirmed += () => {
+					foreach (var child in this.CreatureVBoxContainer.GetChildren()) {
+						if (child is CreatureControl creatureControl) {
+							creatureControl.QueueFree();
+						}
+					}
+
+					ActiveCreatureControl = null;
 				};
 			}
 
 			ClearAllCreaturesConfirmationDialog.Position = (Vector2I) (this.GetWindow().GetPositionWithDecorations() + (this.GetWindow().GetSizeWithDecorations() * new Vector2(0.5f, 0.5f) - (ClearAllCreaturesConfirmationDialog.GetSizeWithDecorations() * new Vector2(0.5f, 0.5f))));
 			ClearAllCreaturesConfirmationDialog.Visible = true;
 
-			// TODO: Reimplement
-			// ClearAllCreaturesConfirmationDialog.DialogText = "Do you want to clear all " + Tree.GetRoot().GetChildCount() + " creatures?";
+			int creatureControlAmount = 0;
+			foreach (var child in this.CreatureVBoxContainer.GetChildren()) {
+				if (child is CreatureControl creatureControl) {
+					creatureControlAmount += 1;
+				}
+			}
+
+			ClearAllCreaturesConfirmationDialog.DialogText = "Do you want to clear all " + creatureControlAmount + " creatures?";
 		};
 
 		// TODO: Reimplement
