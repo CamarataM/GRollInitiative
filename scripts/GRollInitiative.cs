@@ -93,21 +93,7 @@ public partial class GRollInitiative : Control {
 
 		// Handle visibility toggle.
 		AddCreatureToggleWindowButton.Pressed += () => {
-			// AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(GD.Load<Image>(DefaultAvatarPath));
-
-			// AddCreatureButton.Visible = true;
-			// EditCreatureButton.Visible = false;
-
-			// AddCreatureWindow.Visible = !AddCreatureWindow.Visible;
-			var creatureControl = new CreatureControl();
-			creatureControl.CustomMinimumSize = new Vector2(0, 100);
-			this.CreatureVBoxContainer.AddChild(creatureControl);
-
-			creatureControl.InitiativeChanged += (_, newValue) => {
-				this.CallDeferred(GRollInitiative.MethodName.UpdateUI);
-			};
-
-			UpdateUI();
+			CreateAndAddCreatureControl();
 		};
 
 		// Handle close button pressed by hiding visibility of the window.
@@ -303,6 +289,26 @@ public partial class GRollInitiative : Control {
 		// TODO: Make the column size all the same.
 	}
 
+	public CreatureControl CreateAndAddCreatureControl() {
+		var creatureControl = CreateCreatureControl();
+		this.CreatureVBoxContainer.AddChild(creatureControl);
+
+		UpdateUI();
+
+		return creatureControl;
+	}
+
+	public CreatureControl CreateCreatureControl() {
+		var creatureControl = new CreatureControl();
+		creatureControl.CustomMinimumSize = new Vector2(0, 100);
+
+		creatureControl.InitiativeChanged += (_, newValue) => {
+			this.CallDeferred(GRollInitiative.MethodName.UpdateUI);
+		};
+
+		return creatureControl;
+	}
+
 	public string GetCreatureResourceFilePath(CreatureResource creatureResource) {
 		return System.IO.Path.Join(DefaultGalleryFolderPath, SlugHelper.GenerateSlug(creatureResource.Name + "-" + creatureResource.TeamColor) + GALLERY_RESOURCE_FILE_EXTENSION);
 	}
@@ -454,10 +460,8 @@ public partial class GRollInitiative : Control {
 		// 	NextCreatureButton.EmitSignal(Button.SignalName.Pressed);
 		// }
 
-		var creatureControl = new CreatureControl();
-		creatureControl.CustomMinimumSize = new Vector2(0, 100);
+		var creatureControl = CreateAndAddCreatureControl();
 		creatureControl.ImagePath = "res://screenshots/avatars/rpg_characters_avatar_1.png";
 		creatureControl.CreatureName = "Ibris";
-		this.CreatureVBoxContainer.AddChild(creatureControl);
 	}
 }
