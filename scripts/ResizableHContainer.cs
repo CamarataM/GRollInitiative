@@ -169,4 +169,24 @@ public partial class ResizableHContainer : HBoxContainer {
 
 		return returnArray;
 	}
+
+	public void ColorChildContainer(PanelContainer panelContainer, Color? color) {
+		if (color != null && color.HasValue) {
+			panelContainer.AddThemeStyleboxOverride("panel", new StyleBoxFlat() {
+				BgColor = color.Value,
+			});
+		} else {
+			panelContainer.RemoveThemeStyleboxOverride("panel");
+		}
+	}
+
+	public void ColorChildContainerIndex(int index, Color? color) {
+		ColorChildContainer(panelContainer: GetChildContainers()[index], color: color);
+	}
+
+	public void ColorAllChildContainers(Color? color) {
+		for (int i = 0; i < this.ColumnCount; i++) {
+			ColorChildContainerIndex(index: i, color: color);
+		}
+	}
 }

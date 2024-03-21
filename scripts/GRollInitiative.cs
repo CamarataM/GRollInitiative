@@ -39,8 +39,7 @@ public partial class GRollInitiative : Control {
 	public Button SaveToGalleryButton;
 	public Tree GalleryTree;
 
-	public TreeItem ActiveCreatureTreeItem = null;
-	public TreeItem EditCreatureTreeItem = null;
+	public CreatureControl ActiveCreatureControl = null;
 
 	public AcceptDialog NameInvalidConfirmationDialog;
 
@@ -86,7 +85,7 @@ public partial class GRollInitiative : Control {
 			try {
 				if (file.EndsWith(GALLERY_RESOURCE_FILE_EXTENSION)) {
 					var creatureResource = ResourceLoader.Load<CreatureResource>(file);
-					CreateGalleryTreeItemFromCreatureResource(creatureResource);
+					// CreateGalleryTreeItemFromCreatureResource(creatureResource);
 				}
 			} catch (Exception) {
 			}
@@ -108,7 +107,7 @@ public partial class GRollInitiative : Control {
 		// Handle close button pressed by hiding visibility of the window.
 		AddCreatureWindow.CloseRequested += () => {
 			AddCreatureWindow.Visible = false;
-			EditCreatureTreeItem = null;
+			// EditCreatureTreeItem = null;
 		};
 
 		this.GetWindow().FilesDropped += (string[] files) => {
@@ -134,10 +133,10 @@ public partial class GRollInitiative : Control {
 				var creatureResource = GetCreatureResourceFromAddCreatureWindow();
 
 				if (creatureResource != null) {
-					if (EditCreatureTreeItem != null) {
-						AddCreatureWindow.Visible = false;
-						EditCreatureTreeItem = null;
-					}
+					// if (EditCreatureTreeItem != null) {
+					// 	AddCreatureWindow.Visible = false;
+					// 	EditCreatureTreeItem = null;
+					// }
 				}
 			};
 		}
@@ -230,23 +229,24 @@ public partial class GRollInitiative : Control {
 			// ClearAllCreaturesConfirmationDialog.DialogText = "Do you want to clear all " + Tree.GetRoot().GetChildCount() + " creatures?";
 		};
 
-		SaveToGalleryButton.Pressed += () => {
-			var creatureResource = GetCreatureResourceFromAddCreatureWindow();
+		// TODO: Reimplement
+		// SaveToGalleryButton.Pressed += () => {
+		// 	var creatureResource = GetCreatureResourceFromAddCreatureWindow();
 
-			if (creatureResource != null) {
-				CreateGalleryTreeItemFromCreatureResource(creatureResource);
+		// 	if (creatureResource != null) {
+		// 		CreateGalleryTreeItemFromCreatureResource(creatureResource);
 
-				foreach (var child in GalleryTree.GetRoot().GetChildren()) {
-					var childCreatureResource = (CreatureResource) child.GetMeta(CREATURE_RESOURCE_METADATA_KEY);
-					var childCreatureResourceFilePath = GetCreatureResourceFilePath(childCreatureResource);
+		// 		foreach (var child in GalleryTree.GetRoot().GetChildren()) {
+		// 			var childCreatureResource = (CreatureResource) child.GetMeta(CREATURE_RESOURCE_METADATA_KEY);
+		// 			var childCreatureResourceFilePath = GetCreatureResourceFilePath(childCreatureResource);
 
-					var error = ResourceSaver.Save(childCreatureResource, ProjectSettings.GlobalizePath(childCreatureResourceFilePath));
-					if (error != Error.Ok) {
-						GD.PrintErr("Got error trying to save '" + childCreatureResource + "' to path '" + ProjectSettings.GlobalizePath(childCreatureResourceFilePath) + "' (error '" + error + "').");
-					}
-				}
-			}
-		};
+		// 			var error = ResourceSaver.Save(childCreatureResource, ProjectSettings.GlobalizePath(childCreatureResourceFilePath));
+		// 			if (error != Error.Ok) {
+		// 				GD.PrintErr("Got error trying to save '" + childCreatureResource + "' to path '" + ProjectSettings.GlobalizePath(childCreatureResourceFilePath) + "' (error '" + error + "').");
+		// 			}
+		// 		}
+		// 	}
+		// };
 
 		// TODO: Implement auto-saving of previous session (maybe not full save and load functionality, although with the OS-native file picker, it would be a lot easier).
 
@@ -280,65 +280,12 @@ public partial class GRollInitiative : Control {
 				}
 			}
 		}
+
+		// TODO: Make the column size all the same.
 	}
 
 	public string GetCreatureResourceFilePath(CreatureResource creatureResource) {
 		return System.IO.Path.Join(DefaultGalleryFolderPath, SlugHelper.GenerateSlug(creatureResource.Name + "-" + creatureResource.TeamColor) + GALLERY_RESOURCE_FILE_EXTENSION);
-	}
-
-	// public TreeItem CreateInitiativeTreeItemFromCreatureResource(CreatureResource creatureResource, double initiative, TreeItem treeItem = null) {
-	// 	var newTreeItem = CreateGeneralTreeItemFromCreatureResource(Tree, creatureResource: creatureResource, treeItem: treeItem);
-
-	// 	// Set the initiative column.
-	// 	// newTreeItem.SetText(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value.ToString());
-	// 	// newTreeItem.SetMetadata(2, AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
-	// 	newTreeItem.SetText(2, initiative.ToString());
-	// 	newTreeItem.SetMetadata(2, initiative.ToString());
-	// 	newTreeItem.SetExpandRight(2, false);
-
-	// 	UpdateUI();
-
-	// 	return newTreeItem;
-	// }
-
-	public TreeItem CreateGalleryTreeItemFromCreatureResource(CreatureResource creatureResource, TreeItem treeItem = null) {
-		var newTreeItem = CreateGeneralTreeItemFromCreatureResource(GalleryTree, creatureResource: creatureResource, treeItem: treeItem);
-
-		newTreeItem.SetIconMaxWidth(0, GalleryTreeIconWidthSize);
-
-		UpdateUI();
-
-		return newTreeItem;
-	}
-
-	public TreeItem CreateGeneralTreeItemFromCreatureResource(Tree tree, CreatureResource creatureResource, TreeItem treeItem = null) {
-		if (treeItem == null) {
-			treeItem = tree.CreateItem();
-		}
-
-		treeItem.SetMeta(CREATURE_RESOURCE_METADATA_KEY, creatureResource);
-
-		Image avatarImage = null;
-		if (creatureResource.AvatarPath != DefaultAvatarPath && System.IO.File.Exists(creatureResource.AvatarPath)) {
-			// Load the image from the filesystem.
-			avatarImage = Image.LoadFromFile(creatureResource.AvatarPath);
-		}
-
-		if (avatarImage == null) {
-			// Load the image as a resource from the internal resources.
-			avatarImage = GD.Load<Image>(DefaultAvatarPath);
-		}
-
-		treeItem.SetIcon(0, ImageTexture.CreateFromImage(avatarImage));
-		treeItem.SetIconMaxWidth(0, TreeIconWidthSize);
-		treeItem.SetCustomBgColor(0, ((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY)).TeamColor);
-
-		treeItem.SetText(1, creatureResource.Name);
-		treeItem.SetAutowrapMode(1, TextServer.AutowrapMode.WordSmart);
-		treeItem.SetTextOverrunBehavior(1, TextServer.OverrunBehavior.TrimEllipsis);
-		treeItem.SetExpandRight(1, true);
-
-		return treeItem;
 	}
 
 	public CreatureResource GetCreatureResourceFromAddCreatureWindow() {
@@ -383,50 +330,62 @@ public partial class GRollInitiative : Control {
 		}
 	}
 
-	public void RemoveHighlightTreeItem(TreeItem treeItem) {
-		for (int i = 1; i < treeItem.GetTree().Columns; i++) {
-			treeItem.ClearCustomBgColor(i);
+	public void RemoveHighlightTreeItem(CreatureControl creatureControl) {
+		for (int i = 1; i < creatureControl.GetChildContainers().Count; i++) {
+			creatureControl.ColorChildContainerIndex(i, null);
 		}
 	}
 
-	public void HighlightTreeItem(TreeItem treeItem) {
-		for (int i = 0; i < treeItem.GetTree().Columns; i++) {
-			treeItem.SetCustomBgColor(i, ((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY)).TeamColor);
+	public void HighlightTreeItem(CreatureControl creatureControl) {
+		for (int i = 0; i < creatureControl.GetChildContainers().Count; i++) {
+			creatureControl.ColorChildContainerIndex(i, creatureControl.TeamColor);
 		}
 	}
 
 	public void OffsetActiveTreeItem(int offset) {
 		if (offset != 0) {
-			TreeItem nextCreatureTreeItem = null;
+			CreatureControl nextCreatureControl = null;
 
-			if (ActiveCreatureTreeItem != null) {
-				RemoveHighlightTreeItem(ActiveCreatureTreeItem);
+			if (ActiveCreatureControl != null) {
+				RemoveHighlightTreeItem(ActiveCreatureControl);
 
-				nextCreatureTreeItem = ActiveCreatureTreeItem;
+				nextCreatureControl = ActiveCreatureControl;
 				for (int i = 0; i < Math.Abs(offset); i++) {
-					if (nextCreatureTreeItem == null) {
+					if (nextCreatureControl == null) {
 						break;
 					}
 
-					if (offset > 0) {
-						nextCreatureTreeItem = nextCreatureTreeItem.GetNextInTree();
+					var nextIndex = nextCreatureControl.GetIndex() + (1 * Math.Sign(offset));
+					if (nextIndex >= 0 && nextIndex < nextCreatureControl.GetParent().GetChildCount()) {
+						var potentialNextCreatureControl = nextCreatureControl.GetParent().GetChild(nextIndex);
+						if (potentialNextCreatureControl is CreatureControl creatureControl) {
+							nextCreatureControl = creatureControl;
+						} else {
+							nextCreatureControl = null;
+						}
 					} else {
-						nextCreatureTreeItem = nextCreatureTreeItem.GetPrevInTree();
+						nextCreatureControl = null;
 					}
 				}
 			}
 
-			// if (nextCreatureTreeItem == null && Tree.GetRoot().GetChildCount() > 0) {
-			// 	if (offset > 0) {
-			// 		nextCreatureTreeItem = Tree.GetRoot().GetChild(0);
-			// 	} else {
-			// 		nextCreatureTreeItem = Tree.GetRoot().GetChild(Tree.GetRoot().GetChildCount() - 1);
-			// 	}
+			if (nextCreatureControl == null && this.CreatureVBoxContainer.GetChildCount() > 0) {
+				var childrenList = this.CreatureVBoxContainer.GetChildren();
+				if (offset < 0) {
+					childrenList.Reverse();
+				}
 
-			// 	TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY).AsInt32() + Math.Sign(offset));
-			// }
+				foreach (var child in childrenList) {
+					if (child is CreatureControl creatureControl) {
+						nextCreatureControl = creatureControl;
+						break;
+					}
+				}
 
-			ActiveCreatureTreeItem = nextCreatureTreeItem;
+				TurnCountTextLabel.SetMeta(TURN_NUMBER_METADATA_KEY, TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY).AsInt32() + Math.Sign(offset));
+			}
+
+			ActiveCreatureControl = nextCreatureControl;
 		}
 
 		UpdateUI();
@@ -456,8 +415,8 @@ public partial class GRollInitiative : Control {
 		// 	}
 		// }
 
-		if (ActiveCreatureTreeItem != null) {
-			HighlightTreeItem(ActiveCreatureTreeItem);
+		if (ActiveCreatureControl != null) {
+			HighlightTreeItem(ActiveCreatureControl);
 		}
 
 		TurnCountTextLabel.Text = "Turn " + TurnCountTextLabel.GetMeta(TURN_NUMBER_METADATA_KEY, 0);

@@ -31,6 +31,17 @@ public partial class CreatureControl : ResizableHContainer {
 		}
 	}
 
+	private Color _TeamColor = new Color(0, 0.5f, 0, 0.5f);
+	[Export]
+	public Color TeamColor {
+		get => _TeamColor;
+		set {
+			_TeamColor = value;
+
+			Render(CreatureProperty.IMAGE);
+		}
+	}
+
 	private string _CreatureName = null;
 	[Export]
 	public string CreatureName {
@@ -117,19 +128,45 @@ public partial class CreatureControl : ResizableHContainer {
 						// TODO: Reuse previous elements, remaking them if applicable.
 						switch (creatureProperty) {
 							case CreatureProperty.IMAGE:
-							case CreatureProperty.NAME:
-								var lineEdit = new LineEdit();
-								lineEdit.Text = GetVariantFromPanelContainer(panelContainer).Value.AsString();
-								lineEdit.TextSubmitted += (string newText) => {
+								var imagePropertyParentContainer = new VBoxContainer();
+
+								var imageLineEdit = new LineEdit();
+								imageLineEdit.Text = GetVariantFromPanelContainer(panelContainer).Value.AsString();
+								imageLineEdit.TextSubmitted += (string newText) => {
 									GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
 								};
 
 								// Grab the focus in the next frame (cannot this frame, as the lineEdit doesn't exist).
-								lineEdit.CallDeferred(LineEdit.MethodName.GrabFocus);
+								imageLineEdit.CallDeferred(LineEdit.MethodName.GrabFocus);
 								// Set the caret column to the final character (expected location for a text edit box).
-								lineEdit.CaretColumn = lineEdit.Text.Length;
+								imageLineEdit.CaretColumn = imageLineEdit.Text.Length;
 
-								GRollInitiative.StaticEditPropertyCellConfirmationDialog.AddChild(lineEdit);
+								imagePropertyParentContainer.AddChild(imageLineEdit);
+
+								var imageColorPickerButton = new ColorPickerButton();
+								imageColorPickerButton.Color = TeamColor;
+								imageColorPickerButton.CustomMinimumSize = new Vector2(0, 35);
+								imageColorPickerButton.GetPicker().AddPreset(new Color(0, 0.5f, 0, 0.5f));
+								imageColorPickerButton.GetPicker().AddPreset(new Color(0.5f, 0, 0, 0.5f));
+								imageColorPickerButton.GetPicker().AddPreset(new Color(0, 0f, 0.5f, 0.5f));
+								imagePropertyParentContainer.AddChild(imageColorPickerButton);
+
+								GRollInitiative.StaticEditPropertyCellConfirmationDialog.AddChild(imagePropertyParentContainer);
+
+								break;
+							case CreatureProperty.NAME:
+								var nameLineEdit = new LineEdit();
+								nameLineEdit.Text = GetVariantFromPanelContainer(panelContainer).Value.AsString();
+								nameLineEdit.TextSubmitted += (string newText) => {
+									GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
+								};
+
+								// Grab the focus in the next frame (cannot this frame, as the lineEdit doesn't exist).
+								nameLineEdit.CallDeferred(LineEdit.MethodName.GrabFocus);
+								// Set the caret column to the final character (expected location for a text edit box).
+								nameLineEdit.CaretColumn = nameLineEdit.Text.Length;
+
+								GRollInitiative.StaticEditPropertyCellConfirmationDialog.AddChild(nameLineEdit);
 								break;
 							case CreatureProperty.HEALTH:
 							case CreatureProperty.INITIATIVE:
@@ -237,7 +274,8 @@ public partial class CreatureControl : ResizableHContainer {
 						GRollInitiative.StaticEditPropertyCellConfirmationDialog.Confirmed += () => {
 							switch (creatureProperty) {
 								case CreatureProperty.IMAGE:
-									this.ImagePath = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<LineEdit>(0).Text;
+									this.ImagePath = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<VBoxContainer>(0).GetChild<LineEdit>(0).Text;
+									this.TeamColor = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<VBoxContainer>(0).GetChild<ColorPickerButton>(1).Color;
 									break;
 								case CreatureProperty.NAME:
 									this.CreatureName = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<LineEdit>(0).Text;
@@ -317,9 +355,12 @@ public partial class CreatureControl : ResizableHContainer {
 
 						panelContainer.AddChild(imageTextureRect);
 
+						ColorChildContainer(panelContainer, TeamColor);
+
 						break;
 					case CreatureProperty.NAME:
 						var nameLabel = new Label();
+						nameLabel.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
 
 						if (CreatureName != null) {
 							nameLabel.Text = CreatureName;
@@ -344,6 +385,10 @@ public partial class CreatureControl : ResizableHContainer {
 						break;
 					case CreatureProperty.SPELL_SLOTS:
 						var spellSlotsHFlowContainer = new HFlowContainer();
+						spellSlotsHFlowContainer.Alignment = FlowContainer.AlignmentMode.Center;
+						spellSlotsHFlowContainer.SizeFlagsVertical = SizeFlags.ShrinkCenter;
+						spellSlotsHFlowContainer.GrowVertical = GrowDirection.Both;
+
 						bool haveEnabledSpellSlots = false;
 
 						// Set the spell slot text and update the visibility based on whether the spell slot is enabled or not.
@@ -369,6 +414,8 @@ public partial class CreatureControl : ResizableHContainer {
 						if (!haveEnabledSpellSlots) {
 							spellSlotsHFlowContainer.AddChild(new Label() {
 								Text = "No Spell Slots",
+								HorizontalAlignment = HorizontalAlignment.Center,
+								VerticalAlignment = VerticalAlignment.Center,
 							});
 						}
 
