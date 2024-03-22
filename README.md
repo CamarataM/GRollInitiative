@@ -12,12 +12,13 @@ This is the add / edit creature window. Creatures can be added once given a name
 
 A color can be associated for the creature, which will be show in the first column and for the highlight of the active creature during the turn. Finally, if you want to save a creature to the Gallery, the down arrow button can be pressed. When either the 'Add' or a creature in the gallery is double clicked, the creature will be added to the main initiative screen.
 
-Delete can be pressed to delete creatures both in the initiative tracker and the Gallery.
+Delete can be pressed to delete creatures both in the Gallery, while the 'X' button can delete the creature in the tracker.
+
+Double clicking a cell in the tracker allows for editing the value of that cell (such as initiative, the image path, etc).
 
 The 'Previous' and 'Next' buttons control the turn order, going from the highest initiative to the lowest, then wrapping around and incrementing the turn counter.
 
-Gallery creatures are saved to '%appdata%\Godot\app_userdata\GRollInitiative\gallery' on Windows.
-<!-- TODO: Linux directory -->
+Gallery creatures are saved to '%appdata%\Godot\app_userdata\GRollInitiative\gallery' on Windows and '~/.local/share/godot/app_userdata/GRollInitiative/gallery' on Linux.
 
 ## Screenshots
 ![screenshot1.png](screenshots/screenshot1.png)
