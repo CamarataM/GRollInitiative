@@ -133,39 +133,39 @@ public partial class GRollInitiative : Control {
 			creatureControl.TeamColor = AddCreatureWindow.GetNode<ColorPickerButton>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer/ColorPickerButton").Color;
 		};
 
-		GalleryTree.GuiInput += (InputEvent inputEvent) => {
-			if (inputEvent is InputEventKey inputEventKey) {
-				if (inputEventKey.Pressed && inputEventKey.Keycode == Key.Delete) {
-					int galleryTreeChildCount = GalleryTree.GetRoot().GetChildCount();
-					for (int i = 0; i < galleryTreeChildCount; i++) {
-						var selectedItem = GalleryTree.GetNextSelected(null);
+		// GalleryTree.GuiInput += (InputEvent inputEvent) => {
+		// 	if (inputEvent is InputEventKey inputEventKey) {
+		// 		if (inputEventKey.Pressed && inputEventKey.Keycode == Key.Delete) {
+		// 			int galleryTreeChildCount = GalleryTree.GetRoot().GetChildCount();
+		// 			for (int i = 0; i < galleryTreeChildCount; i++) {
+		// 				var selectedItem = GalleryTree.GetNextSelected(null);
 
-						if (selectedItem != null) {
-							var filePath = GetCreatureResourceFilePath((CreatureResource) selectedItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY));
-							if (System.IO.File.Exists(filePath)) {
-								System.IO.File.Move(filePath, filePath + ".dis");
-							}
+		// 				if (selectedItem != null) {
+		// 					var filePath = GetCreatureResourceFilePath((CreatureResource) selectedItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY));
+		// 					if (System.IO.File.Exists(filePath)) {
+		// 						System.IO.File.Move(filePath, filePath + ".dis");
+		// 					}
 
-							selectedItem.GetParent().RemoveChild(selectedItem);
-						} else {
-							break;
-						}
-					}
+		// 					selectedItem.GetParent().RemoveChild(selectedItem);
+		// 				} else {
+		// 					break;
+		// 				}
+		// 			}
 
-					UpdateUI();
-				}
-			}
+		// 			UpdateUI();
+		// 		}
+		// 	}
 
-			if (inputEvent is InputEventMouseButton inputEventMouseButton) {
-				if (inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left && inputEventMouseButton.DoubleClick) {
-					var treeItem = GalleryTree.GetItemAtPosition(inputEventMouseButton.Position);
+		// 	if (inputEvent is InputEventMouseButton inputEventMouseButton) {
+		// 		if (inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left && inputEventMouseButton.DoubleClick) {
+		// 			var treeItem = GalleryTree.GetItemAtPosition(inputEventMouseButton.Position);
 
-					if (treeItem != null) {
-						// CreateInitiativeTreeItemFromCreatureResource((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY), AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
-					}
-				}
-			}
-		};
+		// 			if (treeItem != null) {
+		// 				// CreateInitiativeTreeItemFromCreatureResource((CreatureResource) treeItem.GetMeta(CREATURE_RESOURCE_METADATA_KEY), AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value);
+		// 			}
+		// 		}
+		// 	}
+		// };
 
 		NextCreatureButton.Pressed += () => {
 			OffsetActiveTreeItem(1);
@@ -235,23 +235,25 @@ public partial class GRollInitiative : Control {
 		};
 
 		// TODO: Reimplement
-		// SaveToGalleryButton.Pressed += () => {
-		// 	var creatureResource = GetCreatureResourceFromAddCreatureWindow();
+		SaveToGalleryButton.Pressed += () => {
 
-		// 	if (creatureResource != null) {
-		// 		CreateGalleryTreeItemFromCreatureResource(creatureResource);
 
-		// 		foreach (var child in GalleryTree.GetRoot().GetChildren()) {
-		// 			var childCreatureResource = (CreatureResource) child.GetMeta(CREATURE_RESOURCE_METADATA_KEY);
-		// 			var childCreatureResourceFilePath = GetCreatureResourceFilePath(childCreatureResource);
+			// var creatureResource = GetCreatureResourceFromAddCreatureWindow();
 
-		// 			var error = ResourceSaver.Save(childCreatureResource, ProjectSettings.GlobalizePath(childCreatureResourceFilePath));
-		// 			if (error != Error.Ok) {
-		// 				GD.PrintErr("Got error trying to save '" + childCreatureResource + "' to path '" + ProjectSettings.GlobalizePath(childCreatureResourceFilePath) + "' (error '" + error + "').");
-		// 			}
-		// 		}
-		// 	}
-		// };
+			// if (creatureResource != null) {
+			// 	CreateGalleryTreeItemFromCreatureResource(creatureResource);
+
+			// 	foreach (var child in GalleryTree.GetRoot().GetChildren()) {
+			// 		var childCreatureResource = (CreatureResource) child.GetMeta(CREATURE_RESOURCE_METADATA_KEY);
+			// 		var childCreatureResourceFilePath = GetCreatureResourceFilePath(childCreatureResource);
+
+			// 		var error = ResourceSaver.Save(childCreatureResource, ProjectSettings.GlobalizePath(childCreatureResourceFilePath));
+			// 		if (error != Error.Ok) {
+			// 			GD.PrintErr("Got error trying to save '" + childCreatureResource + "' to path '" + ProjectSettings.GlobalizePath(childCreatureResourceFilePath) + "' (error '" + error + "').");
+			// 		}
+			// 	}
+			// }
+		};
 
 		// TODO: Implement auto-saving of previous session (maybe not full save and load functionality, although with the OS-native file picker, it would be a lot easier).
 
@@ -325,30 +327,30 @@ public partial class GRollInitiative : Control {
 		return creatureControl;
 	}
 
-	public string GetCreatureResourceFilePath(CreatureResource creatureResource) {
-		return System.IO.Path.Join(DefaultGalleryFolderPath, SlugHelper.GenerateSlug(creatureResource.Name + "-" + creatureResource.TeamColor) + GALLERY_RESOURCE_FILE_EXTENSION);
-	}
+	// public string GetCreatureResourceFilePath(CreatureResource creatureResource) {
+	// 	return System.IO.Path.Join(DefaultGalleryFolderPath, SlugHelper.GenerateSlug(creatureResource.Name + "-" + creatureResource.TeamColor) + GALLERY_RESOURCE_FILE_EXTENSION);
+	// }
 
-	public CreatureResource GetCreatureResourceFromAddCreatureWindow() {
-		var name = AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text;
+	// public CreatureResource GetCreatureResourceFromAddCreatureWindow() {
+	// 	var name = AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text;
 
-		if (name != null && name.Trim().Length > 0) {
-			return new CreatureResource((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY, DefaultAvatarPath), name, TeamColorPickerButton.Color);
-		} else {
-			if (NameInvalidConfirmationDialog == null) {
-				NameInvalidConfirmationDialog = new AcceptDialog();
+	// 	if (name != null && name.Trim().Length > 0) {
+	// 		return new CreatureResource((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY, DefaultAvatarPath), name, TeamColorPickerButton.Color);
+	// 	} else {
+	// 		if (NameInvalidConfirmationDialog == null) {
+	// 			NameInvalidConfirmationDialog = new AcceptDialog();
 
-				AddCreatureWindow.AddChild(NameInvalidConfirmationDialog);
-			}
+	// 			AddCreatureWindow.AddChild(NameInvalidConfirmationDialog);
+	// 		}
 
-			NameInvalidConfirmationDialog.Position = (Vector2I) (this.GetWindow().GetPositionWithDecorations() + (this.GetWindow().GetSizeWithDecorations() * new Vector2(0.5f, 0.5f) - (NameInvalidConfirmationDialog.GetSizeWithDecorations() * new Vector2(0.5f, 0.5f))));
-			NameInvalidConfirmationDialog.Visible = true;
+	// 		NameInvalidConfirmationDialog.Position = (Vector2I) (this.GetWindow().GetPositionWithDecorations() + (this.GetWindow().GetSizeWithDecorations() * new Vector2(0.5f, 0.5f) - (NameInvalidConfirmationDialog.GetSizeWithDecorations() * new Vector2(0.5f, 0.5f))));
+	// 		NameInvalidConfirmationDialog.Visible = true;
 
-			NameInvalidConfirmationDialog.DialogText = "Invalid name for creature '" + name + "'.";
-		}
+	// 		NameInvalidConfirmationDialog.DialogText = "Invalid name for creature '" + name + "'.";
+	// 	}
 
-		return null;
-	}
+	// 	return null;
+	// }
 
 	public void OpenCreatureAvatarFileDialog(StringName callbackFunctionStringName) {
 		DisplayServer.FileDialogShow("Select creature avatar image...", CurrentDirectory, "", false, DisplayServer.FileDialogMode.OpenFile, FileDialogFilterStringList.ToArray(), new Callable(this, callbackFunctionStringName));
@@ -490,6 +492,8 @@ public partial class GRollInitiative : Control {
 				creatureControl.SpellSlots = creatureTuple.SpellSlots;
 				creatureControl.Render();
 			}
+
+			GD.Print(creatureControl.ToJSON());
 		}
 
 		AddCreatureWindow.Visible = true;

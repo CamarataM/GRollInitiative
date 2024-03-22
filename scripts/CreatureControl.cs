@@ -70,9 +70,9 @@ public partial class CreatureControl : ResizableHContainer {
 		}
 	}
 
-	private int _Health = 0;
+	private double _Health = 0;
 	[Export]
-	public int Health {
+	public double Health {
 		get => _Health;
 		set {
 			_Health = value;
@@ -221,7 +221,7 @@ public partial class CreatureControl : ResizableHContainer {
 							case CreatureProperty.HEALTH:
 							case CreatureProperty.INITIATIVE:
 								var spinBox = new SpinBox();
-								spinBox.Value = GetVariantFromPanelContainer(panelContainer).Value.AsInt32();
+								spinBox.Value = GetVariantFromPanelContainer(panelContainer).Value.AsDouble();
 								spinBox.GetLineEdit().TextSubmitted += (string newText) => {
 									spinBox.Apply();
 									GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
@@ -314,7 +314,7 @@ public partial class CreatureControl : ResizableHContainer {
 									this.CreatureName = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<LineEdit>(0).Text;
 									break;
 								case CreatureProperty.HEALTH:
-									this.Health = (int) GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
+									this.Health = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
 									break;
 								case CreatureProperty.INITIATIVE:
 									this.Initiative = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
@@ -503,5 +503,45 @@ public partial class CreatureControl : ResizableHContainer {
 		}
 
 		return returnValue;
+	}
+
+	public class JSONKeys {
+		public const string IMAGE_PATH_KEY = "image_path";
+		public const string TEAM_COLOR_KEY = "team_color";
+		public const string CREATURE_NAME_KEY = "name";
+		public const string HEALTH_KEY = "health";
+		public const string INITIATIVE_KEY = "initiative";
+		public const string SPELL_SLOTS_KEY = "spell_slots";
+	}
+
+	public string ToJSON() {
+		var dictionary = new Godot.Collections.Dictionary<string, Variant>();
+
+		dictionary[JSONKeys.IMAGE_PATH_KEY] = this.ImagePath;
+		dictionary[JSONKeys.TEAM_COLOR_KEY] = this.TeamColor;
+		dictionary[JSONKeys.CREATURE_NAME_KEY] = this.CreatureName;
+		dictionary[JSONKeys.HEALTH_KEY] = this.Health;
+		dictionary[JSONKeys.INITIATIVE_KEY] = this.Initiative;
+		dictionary[JSONKeys.SPELL_SLOTS_KEY] = this.SpellSlots;
+
+		return Json.Stringify(dictionary, indent: "\t");
+	}
+
+	public static CreatureControl FromFile(string filePath) {
+		return FromJSONString(System.IO.File.ReadAllText(filePath));
+	}
+
+	public static CreatureControl FromJSONString(string jsonString) {
+		var dictionary = (Godot.Collections.Dictionary<string, Variant>) Json.ParseString(jsonString);
+		var creatureControl = new CreatureControl();
+
+		creatureControl.ImagePath = dictionary[JSONKeys.IMAGE_PATH_KEY].AsString();
+		creatureControl.TeamColor = dictionary[JSONKeys.TEAM_COLOR_KEY].AsColor();
+		creatureControl.CreatureName = dictionary[JSONKeys.CREATURE_NAME_KEY].AsString();
+		creatureControl.Health = dictionary[JSONKeys.HEALTH_KEY].AsDouble();
+		creatureControl.Initiative = dictionary[JSONKeys.INITIATIVE_KEY].AsDouble();
+		creatureControl.SpellSlots = dictionary[JSONKeys.SPELL_SLOTS_KEY].AsGodotArray<SpellSlotData>();
+
+		return creatureControl;
 	}
 }
