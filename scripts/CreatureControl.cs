@@ -49,6 +49,7 @@ public partial class CreatureControl : ResizableHContainer {
 	public List<CreatureProperty> CreaturePropertyColumnList = new List<CreatureProperty>() {
 		CreatureProperty.IMAGE,
 		CreatureProperty.NAME,
+		CreatureProperty.HEALTH,
 		CreatureProperty.INITIATIVE,
 		CreatureProperty.SPELL_SLOTS,
 		CreatureProperty.SAVE_DELETE,
@@ -535,7 +536,8 @@ public partial class CreatureControl : ResizableHContainer {
 		var dictionary = new Godot.Collections.Dictionary<string, Variant>();
 
 		dictionary[JSONKeys.IMAGE_PATH_KEY] = this.ImagePath;
-		dictionary[JSONKeys.TEAM_COLOR_KEY] = this.TeamColor;
+		// Cannot serialize the color raw, so we need to convert to HTML notation.
+		dictionary[JSONKeys.TEAM_COLOR_KEY] = '#' + this.TeamColor.ToHtml();
 		dictionary[JSONKeys.CREATURE_NAME_KEY] = this.CreatureName;
 		dictionary[JSONKeys.HEALTH_KEY] = this.Health;
 		dictionary[JSONKeys.INITIATIVE_KEY] = this.Initiative;
@@ -562,7 +564,7 @@ public partial class CreatureControl : ResizableHContainer {
 		var creatureControl = new CreatureControl();
 
 		creatureControl.ImagePath = dictionary[JSONKeys.IMAGE_PATH_KEY].AsString();
-		creatureControl.TeamColor = dictionary[JSONKeys.TEAM_COLOR_KEY].AsColor();
+		creatureControl.TeamColor = Color.FromHtml(dictionary[JSONKeys.TEAM_COLOR_KEY].AsString().Replace("#", ""));
 		creatureControl.CreatureName = dictionary[JSONKeys.CREATURE_NAME_KEY].AsString();
 		creatureControl.Health = dictionary[JSONKeys.HEALTH_KEY].AsDouble();
 		creatureControl.Initiative = dictionary[JSONKeys.INITIATIVE_KEY].AsDouble();
