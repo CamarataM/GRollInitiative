@@ -32,7 +32,6 @@ public partial class GRollInitiative : Control {
 	public string DefaultGalleryFolderPath = ProjectSettings.GlobalizePath("user://gallery");
 
 	public Button AddCreatureButton;
-	public Button EditCreatureButton;
 	public TextureRect AddCreatureAvatarTextureRect;
 	public ConfirmationDialog ClearAllCreaturesConfirmationDialog;
 	public ColorPickerButton TeamColorPickerButton;
@@ -93,17 +92,24 @@ public partial class GRollInitiative : Control {
 
 		// Handle visibility toggle.
 		AddCreatureToggleWindowButton.Pressed += () => {
-			CreateAndAddCreatureControl();
+			AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(GD.Load<Image>(DefaultAvatarPath));
+
+			AddCreatureButton.Visible = true;
+
+			AddCreatureWindow.Visible = !AddCreatureWindow.Visible;
 		};
 
 		// Handle close button pressed by hiding visibility of the window.
 		AddCreatureWindow.CloseRequested += () => {
 			AddCreatureWindow.Visible = false;
-			// EditCreatureTreeItem = null;
 		};
 
-		this.GetWindow().FilesDropped += (string[] files) => {
-			if (AddCreatureWindow.Visible) {
+		foreach (var window in new Window[] { this.GetWindow(), AddCreatureWindow }) {
+			window.FilesDropped += (string[] files) => {
+				if (!AddCreatureWindow.Visible) {
+					AddCreatureWindow.Visible = true;
+				}
+
 				foreach (var filePath in files) {
 					if (System.IO.File.Exists(filePath)) {
 						AddOrEditCreatureImageCallback(true, new string[] { filePath }, 0);
@@ -111,27 +117,21 @@ public partial class GRollInitiative : Control {
 						GD.PrintErr("Detected drag-drop with invalid file '" + filePath + "'");
 					}
 				}
-			}
-		};
+			};
+		}
 
 		AddCreatureAvatarTextureRect = AddCreatureWindow.GetNode<TextureRect>("MarginContainer/VBoxContainer/MainHBoxContainer/AvatarImageButton/AvatarImage");
 
 		SaveToGalleryButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer/SaveToGalleryButton");
 
 		AddCreatureButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/AddButton");
-		EditCreatureButton = AddCreatureWindow.GetNode<Button>("MarginContainer/VBoxContainer/EditButton");
-		foreach (var button in new Button[] { AddCreatureButton, EditCreatureButton }) {
-			button.Pressed += () => {
-				var creatureResource = GetCreatureResourceFromAddCreatureWindow();
-
-				if (creatureResource != null) {
-					// if (EditCreatureTreeItem != null) {
-					// 	AddCreatureWindow.Visible = false;
-					// 	EditCreatureTreeItem = null;
-					// }
-				}
-			};
-		}
+		AddCreatureButton.Pressed += () => {
+			var creatureControl = CreateAndAddCreatureControl();
+			creatureControl.ImagePath = AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY).AsString();
+			creatureControl.CreatureName = AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text;
+			creatureControl.Initiative = AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value;
+			creatureControl.TeamColor = AddCreatureWindow.GetNode<ColorPickerButton>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer/ColorPickerButton").Color;
+		};
 
 		GalleryTree.GuiInput += (InputEvent inputEvent) => {
 			if (inputEvent is InputEventKey inputEventKey) {
@@ -266,7 +266,11 @@ public partial class GRollInitiative : Control {
 			AddCreatureWindow.Visible = false;
 		}
 
-		AddCreatureWindow.Position = (Vector2I) (this.GetWindow().Position + AddCreatureToggleWindowButton.GlobalPosition + new Vector2(AddCreatureToggleWindowButton.GetRect().Size.X, 0) + new Vector2(3, 0));
+		// Need to check if it isn't in the right position due to this temporarily changing the focus back to Godot on Kubuntu 22.04.
+		var correctAddCreatureWindowPosition = (Vector2I) (this.GetWindow().Position + AddCreatureToggleWindowButton.GlobalPosition + new Vector2(AddCreatureToggleWindowButton.GetRect().Size.X, 0) + new Vector2(3, 0));
+		if (AddCreatureWindow.Position != correctAddCreatureWindowPosition) {
+			AddCreatureWindow.Position = correctAddCreatureWindowPosition;
+		}
 
 		if (EditableCooldown <= 0) {
 		}
@@ -358,9 +362,9 @@ public partial class GRollInitiative : Control {
 
 				if (System.IO.File.Exists(path)) {
 					AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile(path));
+					AddCreatureAvatarTextureRect.SetMeta(AVATAR_PATH_METADATA_KEY, path);
 
 					CurrentDirectory = path;
-					AddCreatureAvatarTextureRect.SetMeta(AVATAR_PATH_METADATA_KEY, path);
 				}
 			} catch (Exception) {
 			}
@@ -487,6 +491,14 @@ public partial class GRollInitiative : Control {
 				creatureControl.Render();
 			}
 		}
+
+		AddCreatureWindow.Visible = true;
+
+		AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text = "Vampire 2";
+		AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value = 19;
+		AddCreatureAvatarTextureRect.SetMeta(AVATAR_PATH_METADATA_KEY, "screenshots/avatars/rpg_characters_avatar_4.png");
+		AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY)));
+		TeamColorPickerButton.Color = new Color(0.5f, 0, 0, 0.5f);
 
 		for (int i = 0; i < 15; i++) {
 			NextCreatureButton.EmitSignal(Button.SignalName.Pressed);
