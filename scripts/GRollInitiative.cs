@@ -300,7 +300,12 @@ public partial class GRollInitiative : Control {
 					var creatureControl = CreateCreatureControl(CreatureControl.FromFile(file));
 					var treeItem = GalleryTree.GetRoot().CreateChild();
 
-					treeItem.SetIcon(0, ImageTexture.CreateFromImage(Image.LoadFromFile(creatureControl.ImagePath)));
+					if(creatureControl.ImagePath != null && System.IO.File.Exists(creatureControl.ImagePath)) {
+						treeItem.SetIcon(0, ImageTexture.CreateFromImage(Image.LoadFromFile(creatureControl.ImagePath)));
+					} else {
+						GD.PrintErr("Path '" + creatureControl.ImagePath + "' does not exists or is invalid.");
+					}
+	
 					treeItem.SetIconMaxWidth(0, TreeIconWidthSize);
 					treeItem.SetCustomBgColor(0, creatureControl.TeamColor);
 					treeItem.SetMetadata(0, creatureControl);
@@ -317,7 +322,13 @@ public partial class GRollInitiative : Control {
 
 	public CreatureControl CreateCreatureControlFromAddCreatureWindow() {
 		var creatureControl = CreateCreatureControl();
-		creatureControl.ImagePath = AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY).AsString();
+		
+		if(AddCreatureAvatarTextureRect.HasMeta(AVATAR_PATH_METADATA_KEY)) {
+			creatureControl.ImagePath = AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY).AsString();
+		} else {
+			creatureControl.ImagePath = null;
+		}
+
 		creatureControl.CreatureName = AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text;
 		creatureControl.Initiative = AddCreatureWindow.GetNode<SpinBox>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/InitiativeSpinBox").Value;
 		creatureControl.TeamColor = AddCreatureWindow.GetNode<ColorPickerButton>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/TeamColorHBoxContainer/ColorPickerButton").Color;
