@@ -79,15 +79,14 @@ public partial class CreatureControl : ResizableHContainer {
 		}
 	}
 
-	private int _Initiative = 0;
+	private double _Initiative = 0;
 	[Export]
-	public int Initiative {
+	public double Initiative {
 		get => _Initiative;
 		set {
 			OnInitiativeChanged(value);
 
 			_Initiative = value;
-
 
 			Render(CreatureProperty.INITIATIVE);
 		}
@@ -95,7 +94,7 @@ public partial class CreatureControl : ResizableHContainer {
 
 	private Godot.Collections.Array<SpellSlotData> _SpellSlots = new Godot.Collections.Array<SpellSlotData>();
 	[Export]
-	public Godot.Collections.Array<SpellSlotData> SpellSlots3 {
+	public Godot.Collections.Array<SpellSlotData> SpellSlots {
 		get => _SpellSlots;
 		set {
 			_SpellSlots = value;
@@ -104,8 +103,8 @@ public partial class CreatureControl : ResizableHContainer {
 		}
 	}
 
-	public event EventHandler<int> InitiativeChanged;
-	protected virtual void OnInitiativeChanged(int newValue) {
+	public event EventHandler<double> InitiativeChanged;
+	protected virtual void OnInitiativeChanged(double newValue) {
 		InitiativeChanged?.Invoke(this, newValue);
 	}
 
@@ -236,7 +235,7 @@ public partial class CreatureControl : ResizableHContainer {
 								}
 
 								// Add any existing spell slots for the current creature.
-								foreach (var spellSlotData in this.SpellSlots3) {
+								foreach (var spellSlotData in this.SpellSlots) {
 									var spellSlotContainer = CreateSpellSlotContainer();
 									spellSlotContainer.GetChild<SpinBox>(0).Value = spellSlotData.SpellSlotIndex;
 								}
@@ -290,7 +289,7 @@ public partial class CreatureControl : ResizableHContainer {
 									this.Health = (int) GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
 									break;
 								case CreatureProperty.INITIATIVE:
-									this.Initiative = (int) GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
+									this.Initiative = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
 									break;
 								case CreatureProperty.SPELL_SLOTS:
 									var newSpellSlotDataArray = new Godot.Collections.Array<SpellSlotData>();
@@ -303,7 +302,7 @@ public partial class CreatureControl : ResizableHContainer {
 													var spellSlotIndex = (int) spellSlotParentContainerChild.GetChild<SpinBox>(0).Value;
 
 													SpellSlotData existingSpellSlotData = null;
-													foreach (var spellSlotData in this.SpellSlots3) {
+													foreach (var spellSlotData in this.SpellSlots) {
 														if (spellSlotData.SpellSlotIndex == spellSlotIndex) {
 															existingSpellSlotData = spellSlotData;
 															break;
@@ -320,7 +319,7 @@ public partial class CreatureControl : ResizableHContainer {
 										}
 									}
 
-									this.SpellSlots3 = newSpellSlotDataArray;
+									this.SpellSlots = newSpellSlotDataArray;
 
 									Render();
 
@@ -406,8 +405,8 @@ public partial class CreatureControl : ResizableHContainer {
 
 						var spellSlotControlList = new List<SpellSlotControl>();
 						// Set the spell slot text and update the visibility based on whether the spell slot is enabled or not.
-						foreach (var spellSlotData in this.SpellSlots3) {
-							var newSpellSlotControl = new SpellSlotControl(spellSlotIndex: spellSlotData.SpellSlotIndex, spellSlotAmount: spellSlotData.SpellSlotAmount);
+						foreach (var spellSlotData in this.SpellSlots) {
+							var newSpellSlotControl = new SpellSlotControl(spellSlotData);
 							spellSlotsHFlowContainer.AddChild(newSpellSlotControl);
 							spellSlotControlList.Add(newSpellSlotControl);
 
@@ -417,7 +416,8 @@ public partial class CreatureControl : ResizableHContainer {
 						// Check if we have any visible children. If not, add a label which states that we have no spell slots in the container.
 						if (!haveEnabledSpellSlots) {
 							spellSlotsHFlowContainer.AddChild(new Label() {
-								Text = "No Spell Slots",
+								// Text = "No Spell Slots",
+								Text = "None",
 								HorizontalAlignment = HorizontalAlignment.Center,
 								VerticalAlignment = VerticalAlignment.Center,
 							});
@@ -440,14 +440,6 @@ public partial class CreatureControl : ResizableHContainer {
 			}
 		}
 	}
-
-	// public List<SpellSlotControl> GetSpellSlotControls() {
-	// 	var returnList = new List<SpinBox>();
-
-	// 	foreach (var control in )
-
-	// 		return returnList;
-	// }
 
 	public Variant? GetVariantFromPanelContainer(PanelContainer panelContainer) {
 		Variant? returnValue = null;

@@ -301,6 +301,7 @@ public partial class GRollInitiative : Control {
 	public CreatureControl CreateCreatureControl() {
 		var creatureControl = new CreatureControl();
 		creatureControl.CustomMinimumSize = new Vector2(0, 100);
+		creatureControl.CreatureName = "Creature";
 
 		creatureControl.InitiativeChanged += (_, newValue) => {
 			this.CallDeferred(GRollInitiative.MethodName.UpdateUI);
@@ -381,6 +382,9 @@ public partial class GRollInitiative : Control {
 					}
 
 					var nextIndex = nextCreatureControl.GetIndex() + (1 * Math.Sign(offset));
+					GD.Print("(1 * Math.Sign(offset)) " + (1 * Math.Sign(offset)));
+					GD.Print("nextCreatureControl.GetIndex() " + nextCreatureControl.GetIndex());
+					GD.Print("nextIndex " + nextIndex);
 					if (nextIndex >= 0 && nextIndex < nextCreatureControl.GetParent().GetChildCount()) {
 						var potentialNextCreatureControl = nextCreatureControl.GetParent().GetChild(nextIndex);
 						if (potentialNextCreatureControl is CreatureControl creatureControl) {
@@ -424,8 +428,16 @@ public partial class GRollInitiative : Control {
 			}
 		}
 
-		// Sort from greatest initiative to least.
-		creatureControlList.Sort((a, b) => { return a.Initiative.CompareTo(b.Initiative); });
+		// Sort from greatest initiative to least, creature name, then finally hashcode. Checking if the values are equal, then finally comparing hashcodes is to ensure that the sort is stable. If this isn't here, the next and previous button will have strange behaviors as the CreatureControls with equal initiatives shift pseudo-randomly.
+		creatureControlList.Sort((a, b) => {
+			if (a.Initiative != b.Initiative) {
+				return a.Initiative.CompareTo(b.Initiative);
+			} else if (a.CreatureName != b.CreatureName) {
+				return a.CreatureName.CompareTo(b.CreatureName);
+			} else {
+				return a.GetHashCode().CompareTo(b.GetHashCode());
+			}
+		});
 		// Reverse the order of the initiative list.
 		creatureControlList.Reverse();
 		// For each control in the sorted list, move that control to the front.
@@ -460,23 +472,8 @@ public partial class GRollInitiative : Control {
 			creatureControl.Initiative = creatureTuple.Initiative;
 
 			if (creatureTuple.SpellSlots != null) {
-				creatureControl.SpellSlots3 = creatureTuple.SpellSlots;
+				creatureControl.SpellSlots = creatureTuple.SpellSlots;
 				creatureControl.Render();
-
-				// 	for (int i = 0; i < creatureTuple.SpellSlots.Count; i++) {
-				// 		creatureControl.EnabledSpellSlots.Add(creatureTuple.SpellSlots[i] != null && creatureTuple.SpellSlots[i] != -1);
-				// 	}
-
-				// 	creatureControl.Render();
-
-				// 	var spellSlotSpinBoxes = creatureControl.GetSpellSlotSpinBoxes();
-				// 	for (int i = 0; i < spellSlotSpinBoxes.Count; i++) {
-				// 		var spellSlotSpinBox = spellSlotSpinBoxes[i];
-				// 		if (spellSlotSpinBoxes != null) {
-				// 			spellSlotSpinBox.SetDeferred(SpinBox.PropertyName.Value, creatureTuple.SpellSlots[i]);
-				// 			// spellSlotSpinBox.Value = creatureTuple.SpellSlots[i];
-				// 		}
-				// 	}
 			}
 		}
 
