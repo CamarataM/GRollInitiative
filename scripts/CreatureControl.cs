@@ -17,6 +17,9 @@ public partial class CreatureControl : ResizableHContainer {
 	}
 
 	public partial class SpellSlotData : Resource {
+		public const string SPELL_SLOT_INDEX_KEY = "spell_slot_index";
+		public const string SPELL_SLOT_AMOUNT_KEY = "spell_slot_amount";
+
 		public int SpellSlotIndex;
 		public int SpellSlotAmount;
 
@@ -26,6 +29,20 @@ public partial class CreatureControl : ResizableHContainer {
 		public SpellSlotData(int spellSlotIndex, int spellSlotAmount = 0) {
 			this.SpellSlotIndex = spellSlotIndex;
 			this.SpellSlotAmount = spellSlotAmount;
+		}
+
+		public Godot.Collections.Dictionary<string, Variant> ToDictionary() {
+			return new Godot.Collections.Dictionary<string, Variant>() {
+				{SPELL_SLOT_INDEX_KEY, this.SpellSlotIndex},
+				{SPELL_SLOT_AMOUNT_KEY, this.SpellSlotAmount},
+			};
+		}
+
+		public static SpellSlotData FromDictionary(Godot.Collections.Dictionary<string, Variant> dictionary) {
+			return new SpellSlotData() {
+				SpellSlotIndex = dictionary[SPELL_SLOT_INDEX_KEY].AsInt32(),
+				SpellSlotAmount = dictionary[SPELL_SLOT_AMOUNT_KEY].AsInt32(),
+			};
 		}
 	}
 
@@ -522,7 +539,16 @@ public partial class CreatureControl : ResizableHContainer {
 		dictionary[JSONKeys.CREATURE_NAME_KEY] = this.CreatureName;
 		dictionary[JSONKeys.HEALTH_KEY] = this.Health;
 		dictionary[JSONKeys.INITIATIVE_KEY] = this.Initiative;
-		dictionary[JSONKeys.SPELL_SLOTS_KEY] = this.SpellSlots;
+
+		// Cannot do this, as resource is not JSON serializable by default.
+		// dictionary[JSONKeys.SPELL_SLOTS_KEY] = this.SpellSlots;
+
+		// Convert the spell slots into a dictionary.
+		var spellSlotDictionary = new Godot.Collections.Array<Godot.Collections.Dictionary<string, Variant>>();
+		foreach (var spellSlot in this.SpellSlots) {
+			spellSlotDictionary.Add(spellSlot.ToDictionary());
+		}
+		dictionary[JSONKeys.SPELL_SLOTS_KEY] = spellSlotDictionary;
 
 		return Json.Stringify(dictionary, indent: "\t");
 	}
@@ -540,7 +566,14 @@ public partial class CreatureControl : ResizableHContainer {
 		creatureControl.CreatureName = dictionary[JSONKeys.CREATURE_NAME_KEY].AsString();
 		creatureControl.Health = dictionary[JSONKeys.HEALTH_KEY].AsDouble();
 		creatureControl.Initiative = dictionary[JSONKeys.INITIATIVE_KEY].AsDouble();
-		creatureControl.SpellSlots = dictionary[JSONKeys.SPELL_SLOTS_KEY].AsGodotArray<SpellSlotData>();
+
+		// Cannot do this, do to Json being unable to deserialize a resource class.
+		// creatureControl.SpellSlots = dictionary[JSONKeys.SPELL_SLOTS_KEY].AsGodotArray<SpellSlotData>();
+
+		// Convert from the dictionary to a SpellSlotData.
+		foreach (var spellSlotDictionary in dictionary[JSONKeys.SPELL_SLOTS_KEY].AsGodotArray<Godot.Collections.Dictionary<string, Variant>>()) {
+			creatureControl.SpellSlots.Add(SpellSlotData.FromDictionary(spellSlotDictionary));
+		}
 
 		return creatureControl;
 	}
