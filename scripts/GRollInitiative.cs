@@ -531,6 +531,11 @@ public partial class GRollInitiative : Control {
 			}
 		}
 
+		// Clear gallery tree items.
+		foreach (var child in new List<TreeItem>(GalleryTree.GetRoot().GetChildren())) {
+			child.GetParent().RemoveChild(child);
+		}
+
 		AddCreatureWindow.Visible = true;
 
 		AddCreatureWindow.GetNode<LineEdit>("MarginContainer/VBoxContainer/MainHBoxContainer/SettingsVBoxContainer/NameLineEdit").Text = "Vampire 2";
@@ -538,6 +543,8 @@ public partial class GRollInitiative : Control {
 		AddCreatureAvatarTextureRect.SetMeta(AVATAR_PATH_METADATA_KEY, "screenshots/avatars/rpg_characters_avatar_4.png");
 		AddCreatureAvatarTextureRect.Texture = ImageTexture.CreateFromImage(Image.LoadFromFile((string) AddCreatureAvatarTextureRect.GetMeta(AVATAR_PATH_METADATA_KEY)));
 		TeamColorPickerButton.Color = new Color(0.5f, 0, 0, 0.5f);
+
+		SaveToGalleryButton.EmitSignal(Button.SignalName.Pressed);
 
 		for (int i = 0; i < 15; i++) {
 			NextCreatureButton.EmitSignal(Button.SignalName.Pressed);
