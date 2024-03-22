@@ -307,6 +307,17 @@ public partial class GRollInitiative : Control {
 			this.CallDeferred(GRollInitiative.MethodName.UpdateUI);
 		};
 
+		creatureControl.Deleted += () => {
+			// If the deleted creature control was the active creature control, attempt to move to the previous index control, moving to the next if we cannot go backwards any more.
+			if (creatureControl == ActiveCreatureControl) {
+				if (creatureControl.GetIndex() == 0) {
+					NextCreatureButton.EmitSignal(Button.SignalName.Pressed);
+				} else {
+					PreviousCreatureButton.EmitSignal(Button.SignalName.Pressed);
+				}
+			}
+		};
+
 		return creatureControl;
 	}
 
@@ -373,27 +384,27 @@ public partial class GRollInitiative : Control {
 			CreatureControl nextCreatureControl = null;
 
 			if (ActiveCreatureControl != null) {
-				RemoveHighlightTreeItem(ActiveCreatureControl);
+				// Check if the active CreatureControl is in the scene. If it isn't, then it must have been removed without being processed (same frame), so select either the beginning or end of the CreatureControl list.
+				if (ActiveCreatureControl.IsInsideTree()) {
+					RemoveHighlightTreeItem(ActiveCreatureControl);
 
-				nextCreatureControl = ActiveCreatureControl;
-				for (int i = 0; i < Math.Abs(offset); i++) {
-					if (nextCreatureControl == null) {
-						break;
-					}
+					nextCreatureControl = ActiveCreatureControl;
+					for (int i = 0; i < Math.Abs(offset); i++) {
+						if (nextCreatureControl == null) {
+							break;
+						}
 
-					var nextIndex = nextCreatureControl.GetIndex() + (1 * Math.Sign(offset));
-					GD.Print("(1 * Math.Sign(offset)) " + (1 * Math.Sign(offset)));
-					GD.Print("nextCreatureControl.GetIndex() " + nextCreatureControl.GetIndex());
-					GD.Print("nextIndex " + nextIndex);
-					if (nextIndex >= 0 && nextIndex < nextCreatureControl.GetParent().GetChildCount()) {
-						var potentialNextCreatureControl = nextCreatureControl.GetParent().GetChild(nextIndex);
-						if (potentialNextCreatureControl is CreatureControl creatureControl) {
-							nextCreatureControl = creatureControl;
+						var nextIndex = nextCreatureControl.GetIndex() + (1 * Math.Sign(offset));
+						if (nextIndex >= 0 && nextIndex < nextCreatureControl.GetParent().GetChildCount()) {
+							var potentialNextCreatureControl = nextCreatureControl.GetParent().GetChild(nextIndex);
+							if (potentialNextCreatureControl is CreatureControl creatureControl) {
+								nextCreatureControl = creatureControl;
+							} else {
+								nextCreatureControl = null;
+							}
 						} else {
 							nextCreatureControl = null;
 						}
-					} else {
-						nextCreatureControl = null;
 					}
 				}
 			}

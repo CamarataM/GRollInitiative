@@ -13,6 +13,7 @@ public partial class CreatureControl : ResizableHContainer {
 		HEALTH,
 		INITIATIVE,
 		SPELL_SLOTS,
+		SAVE_DELETE,
 	}
 
 	public partial class SpellSlotData : Resource {
@@ -33,6 +34,7 @@ public partial class CreatureControl : ResizableHContainer {
 		CreatureProperty.NAME,
 		CreatureProperty.INITIATIVE,
 		CreatureProperty.SPELL_SLOTS,
+		CreatureProperty.SAVE_DELETE,
 	};
 
 	private string _ImagePath = null;
@@ -103,6 +105,11 @@ public partial class CreatureControl : ResizableHContainer {
 		}
 	}
 
+	public event Action Deleted;
+	protected virtual void OnDeleted() {
+		Deleted?.Invoke();
+	}
+
 	public event EventHandler<double> InitiativeChanged;
 	protected virtual void OnInitiativeChanged(double newValue) {
 		InitiativeChanged?.Invoke(this, newValue);
@@ -114,6 +121,27 @@ public partial class CreatureControl : ResizableHContainer {
 		this.ColumnCount = 5;
 
 		this.CallDeferred(CreatureControl.MethodName.Render);
+	}
+
+	public override void _Process(double delta) {
+		base._Process(delta);
+
+		// Set the save delete button to their minimum size.
+		this.ColumnCount = CreaturePropertyColumnList.Count;
+		for (int columnIndex = 0; columnIndex < this.ColumnCount; columnIndex++) {
+			var creatureProperty = CreaturePropertyColumnList[columnIndex];
+
+			if (creatureProperty == CreatureProperty.SAVE_DELETE) {
+				var panelContainer = this.GetChildContainers()[columnIndex];
+
+				panelContainer.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+				panelContainer.SizeFlagsVertical = SizeFlags.ShrinkCenter;
+				panelContainer.Size = new Vector2(panelContainer.GetMinimumSize().X, panelContainer.Size.Y);
+				panelContainer.CustomMinimumSize = new Vector2(panelContainer.GetMinimumSize().X, panelContainer.Size.Y);
+			}
+		}
+
+		RefreshColumns();
 	}
 
 	public static void RemoveAllChildren(Node node) {
@@ -431,6 +459,28 @@ public partial class CreatureControl : ResizableHContainer {
 						}
 
 						panelContainer.AddChild(spellSlotsHFlowContainer);
+
+						break;
+					case CreatureProperty.SAVE_DELETE:
+						var buttonContainer = new VBoxContainer();
+
+						var saveButton = new Button();
+						saveButton.Text = "S";
+						saveButton.Pressed += () => {
+							GD.Print("TODO: Implement Save");
+						};
+						buttonContainer.AddChild(saveButton);
+
+						var deleteButton = new Button();
+						deleteButton.Text = "X";
+						deleteButton.Pressed += () => {
+							OnDeleted();
+
+							this.QueueFree();
+						};
+						buttonContainer.AddChild(deleteButton);
+
+						panelContainer.AddChild(buttonContainer);
 
 						break;
 					default:
