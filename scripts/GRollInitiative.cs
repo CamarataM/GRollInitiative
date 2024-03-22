@@ -26,10 +26,11 @@ public partial class GRollInitiative : Control {
 
 	[Export]
 	public ConfirmationDialog EditPropertyCellConfirmationDialog;
-	public static ConfirmationDialog StaticEditPropertyCellConfirmationDialog;
 
-	public string DefaultAvatarPath = "res://resources/test_avatar.png";
-	public string DefaultGalleryFolderPath = ProjectSettings.GlobalizePath("user://gallery");
+	public static GRollInitiative Instance;
+
+	public static string DefaultAvatarPath = "res://resources/test_avatar.png";
+	public static string DefaultGalleryFolderPath = ProjectSettings.GlobalizePath("user://gallery");
 
 	public Button AddCreatureButton;
 	public TextureRect AddCreatureAvatarTextureRect;
@@ -64,7 +65,7 @@ public partial class GRollInitiative : Control {
 	public static readonly SlugHelper SlugHelper = new SlugHelper();
 
 	public override void _Ready() {
-		GRollInitiative.StaticEditPropertyCellConfirmationDialog = this.EditPropertyCellConfirmationDialog;
+		GRollInitiative.Instance = this;
 
 		System.IO.Directory.CreateDirectory(DefaultGalleryFolderPath);
 
@@ -235,19 +236,14 @@ public partial class GRollInitiative : Control {
 
 		SaveToGalleryButton.Pressed += () => {
 			var creatureControl = CreateCreatureControlFromAddCreatureWindow();
-			var creatureControlFilePath = ProjectSettings.GlobalizePath(GetCreatureControlFilePath(creatureControl));
-
-			GD.Print("Saved '" + creatureControl.CreatureName + "' to '" + creatureControlFilePath + "'");
-			System.IO.File.WriteAllText(creatureControlFilePath, creatureControl.ToJSON());
-
-			RefreshGallery();
+			SaveCreatureControlToGallery(creatureControl);
 		};
 
 		// TODO: Implement auto-saving of previous session (maybe not full save and load functionality, although with the OS-native file picker, it would be a lot easier).
 
 		// TODO: Implement icon overlays for creature status (incapacitated, dead, etc).
 
-		FillWithTestData();
+		// FillWithTestData();
 	}
 
 	public override void _Process(double delta) {
@@ -281,6 +277,15 @@ public partial class GRollInitiative : Control {
 		}
 
 		// TODO: Make the column size all the same.
+	}
+
+	public static void SaveCreatureControlToGallery(CreatureControl creatureControl) {
+		var creatureControlFilePath = ProjectSettings.GlobalizePath(GetCreatureControlFilePath(creatureControl));
+
+		GD.Print("Saved '" + creatureControl.CreatureName + "' to '" + creatureControlFilePath + "'");
+		System.IO.File.WriteAllText(creatureControlFilePath, creatureControl.ToJSON());
+
+		GRollInitiative.Instance.RefreshGallery();
 	}
 
 	public void RefreshGallery() {
@@ -355,7 +360,7 @@ public partial class GRollInitiative : Control {
 		return creatureControl;
 	}
 
-	public string GetCreatureControlFilePath(CreatureControl creatureControl) {
+	public static string GetCreatureControlFilePath(CreatureControl creatureControl) {
 		var rawFileName = creatureControl.CreatureName + "-";
 		rawFileName += Math.Round(creatureControl.TeamColor.R, 2) + " ";
 		rawFileName += Math.Round(creatureControl.TeamColor.G, 2) + " ";

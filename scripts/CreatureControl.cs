@@ -133,10 +133,12 @@ public partial class CreatureControl : ResizableHContainer {
 		InitiativeChanged?.Invoke(this, newValue);
 	}
 
+	private Node PreviousParent = null;
+
 	// Need a default constructor for Godot to be able to make the Node.
 	public CreatureControl() {
 		this.ImagePath = "";
-		this.ColumnCount = 5;
+		this.ColumnCount = this.CreaturePropertyColumnList.Count;
 
 		this.CallDeferred(CreatureControl.MethodName.Render);
 	}
@@ -160,6 +162,12 @@ public partial class CreatureControl : ResizableHContainer {
 		}
 
 		RefreshColumns();
+
+		if (PreviousParent != this.GetParent()) {
+			this.Render();
+		}
+
+		PreviousParent = this.GetParent();
 	}
 
 	public static void RemoveAllChildren(Node node) {
@@ -174,7 +182,7 @@ public partial class CreatureControl : ResizableHContainer {
 	}
 
 	public void Render(CreatureProperty? creaturePropertyOverride = null) {
-		this.ColumnCount = CreaturePropertyColumnList.Count;
+		this.ColumnCount = this.CreaturePropertyColumnList.Count;
 
 		for (int columnIndex = 0; columnIndex < this.ColumnCount; columnIndex++) {
 			var creatureProperty = CreaturePropertyColumnList[columnIndex];
@@ -190,7 +198,7 @@ public partial class CreatureControl : ResizableHContainer {
 				if (@event is InputEventMouseButton inputEventMouseButton) {
 					if (inputEventMouseButton.Pressed && inputEventMouseButton.ButtonIndex == MouseButton.Left && inputEventMouseButton.DoubleClick) {
 						// Remove all previous input children on the confirmation dialog.
-						RemoveAllChildren(GRollInitiative.StaticEditPropertyCellConfirmationDialog);
+						RemoveAllChildren(GRollInitiative.Instance.EditPropertyCellConfirmationDialog);
 
 						// Based on the current creature property for the panel container, add a new input control.
 						// TODO: Reuse previous elements, remaking them if applicable.
@@ -201,7 +209,7 @@ public partial class CreatureControl : ResizableHContainer {
 								var imageLineEdit = new LineEdit();
 								imageLineEdit.Text = GetVariantFromPanelContainer(panelContainer).Value.AsString();
 								imageLineEdit.TextSubmitted += (string newText) => {
-									GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
+									GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
 								};
 
 								// Grab the focus in the next frame (cannot this frame, as the lineEdit doesn't exist).
@@ -219,14 +227,14 @@ public partial class CreatureControl : ResizableHContainer {
 								imageColorPickerButton.GetPicker().AddPreset(new Color(0, 0f, 0.5f, 0.5f));
 								imagePropertyParentContainer.AddChild(imageColorPickerButton);
 
-								GRollInitiative.StaticEditPropertyCellConfirmationDialog.AddChild(imagePropertyParentContainer);
+								GRollInitiative.Instance.EditPropertyCellConfirmationDialog.AddChild(imagePropertyParentContainer);
 
 								break;
 							case CreatureProperty.NAME:
 								var nameLineEdit = new LineEdit();
 								nameLineEdit.Text = GetVariantFromPanelContainer(panelContainer).Value.AsString();
 								nameLineEdit.TextSubmitted += (string newText) => {
-									GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
+									GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
 								};
 
 								// Grab the focus in the next frame (cannot this frame, as the lineEdit doesn't exist).
@@ -234,7 +242,7 @@ public partial class CreatureControl : ResizableHContainer {
 								// Set the caret column to the final character (expected location for a text edit box).
 								nameLineEdit.CaretColumn = nameLineEdit.Text.Length;
 
-								GRollInitiative.StaticEditPropertyCellConfirmationDialog.AddChild(nameLineEdit);
+								GRollInitiative.Instance.EditPropertyCellConfirmationDialog.AddChild(nameLineEdit);
 								break;
 							case CreatureProperty.HEALTH:
 							case CreatureProperty.INITIATIVE:
@@ -242,7 +250,7 @@ public partial class CreatureControl : ResizableHContainer {
 								spinBox.Value = GetVariantFromPanelContainer(panelContainer).Value.AsDouble();
 								spinBox.GetLineEdit().TextSubmitted += (string newText) => {
 									spinBox.Apply();
-									GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
+									GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetOkButton().EmitSignal(Button.SignalName.Pressed);
 								};
 
 								// Grab the focus in the next frame (cannot this frame, as the lineEdit doesn't exist).
@@ -250,7 +258,7 @@ public partial class CreatureControl : ResizableHContainer {
 								// Set the caret column to the final character (expected location for a text edit box).
 								spinBox.GetLineEdit().CaretColumn = spinBox.GetLineEdit().Text.Length;
 
-								GRollInitiative.StaticEditPropertyCellConfirmationDialog.AddChild(spinBox);
+								GRollInitiative.Instance.EditPropertyCellConfirmationDialog.AddChild(spinBox);
 								break;
 							case CreatureProperty.SPELL_SLOTS:
 								// Create a parent container to contain the sub-container which will hold the spell slot controls, the add button, and the spinbox.
@@ -309,7 +317,7 @@ public partial class CreatureControl : ResizableHContainer {
 								spellSlotsControlVBoxContainer.AddChild(deleteAllButton);
 								spellSlotsControlVBoxContainer.AddChild(spellSlotsCheckButtonVBoxContainer);
 
-								GRollInitiative.StaticEditPropertyCellConfirmationDialog.AddChild(spellSlotsControlVBoxContainer);
+								GRollInitiative.Instance.EditPropertyCellConfirmationDialog.AddChild(spellSlotsControlVBoxContainer);
 								break;
 							default:
 								GD.PrintErr("Unhandled CreatureProperty '" + creatureProperty + "'");
@@ -317,31 +325,31 @@ public partial class CreatureControl : ResizableHContainer {
 						}
 
 						// Clear the previous signals for callable.
-						foreach (var signalConnectionDictionary in GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetSignalConnectionList(ConfirmationDialog.SignalName.Confirmed)) {
+						foreach (var signalConnectionDictionary in GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetSignalConnectionList(ConfirmationDialog.SignalName.Confirmed)) {
 							var callable = signalConnectionDictionary["callable"];
-							GRollInitiative.StaticEditPropertyCellConfirmationDialog.Disconnect(ConfirmationDialog.SignalName.Confirmed, (Callable) callable);
+							GRollInitiative.Instance.EditPropertyCellConfirmationDialog.Disconnect(ConfirmationDialog.SignalName.Confirmed, (Callable) callable);
 						}
 
-						GRollInitiative.StaticEditPropertyCellConfirmationDialog.Confirmed += () => {
+						GRollInitiative.Instance.EditPropertyCellConfirmationDialog.Confirmed += () => {
 							switch (creatureProperty) {
 								case CreatureProperty.IMAGE:
-									this.ImagePath = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<VBoxContainer>(0).GetChild<LineEdit>(0).Text;
-									this.TeamColor = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<VBoxContainer>(0).GetChild<ColorPickerButton>(1).Color;
+									this.ImagePath = GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetChild<VBoxContainer>(0).GetChild<LineEdit>(0).Text;
+									this.TeamColor = GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetChild<VBoxContainer>(0).GetChild<ColorPickerButton>(1).Color;
 									break;
 								case CreatureProperty.NAME:
-									this.CreatureName = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<LineEdit>(0).Text;
+									this.CreatureName = GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetChild<LineEdit>(0).Text;
 									break;
 								case CreatureProperty.HEALTH:
-									this.Health = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
+									this.Health = GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
 									break;
 								case CreatureProperty.INITIATIVE:
-									this.Initiative = GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
+									this.Initiative = GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetChild<SpinBox>(0).Value;
 									break;
 								case CreatureProperty.SPELL_SLOTS:
 									var newSpellSlotDataArray = new Godot.Collections.Array<SpellSlotData>();
 
 									// Iterate each spell slot container, checking if it is checked or not, adding a new SpellSlotData class to the array for any unhandled.
-									foreach (var child in GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetChild<VBoxContainer>(0).GetChildren()) {
+									foreach (var child in GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetChild<VBoxContainer>(0).GetChildren()) {
 										if (child is VBoxContainer) {
 											foreach (var spellSlotParentContainerChild in child.GetChildren()) {
 												if (spellSlotParentContainerChild is HBoxContainer hBoxContainer) {
@@ -376,12 +384,12 @@ public partial class CreatureControl : ResizableHContainer {
 							}
 						};
 
-						GRollInitiative.StaticEditPropertyCellConfirmationDialog.Position = (Vector2I) (GetWindow().Position + inputEventMouseButton.GlobalPosition - (GRollInitiative.StaticEditPropertyCellConfirmationDialog.Size / 2) + new Vector2(0, 30));
+						GRollInitiative.Instance.EditPropertyCellConfirmationDialog.Position = (Vector2I) (GetWindow().Position + inputEventMouseButton.GlobalPosition - (GRollInitiative.Instance.EditPropertyCellConfirmationDialog.Size / 2) + new Vector2(0, 30));
 
 						// Set the size of the confirmation dialog equal to the minimum size required plus an offset.
-						GRollInitiative.StaticEditPropertyCellConfirmationDialog.Size = (Vector2I) GRollInitiative.StaticEditPropertyCellConfirmationDialog.GetContentsMinimumSize() + new Vector2I(100, 10);
+						GRollInitiative.Instance.EditPropertyCellConfirmationDialog.Size = (Vector2I) GRollInitiative.Instance.EditPropertyCellConfirmationDialog.GetContentsMinimumSize() + new Vector2I(100, 10);
 
-						GRollInitiative.StaticEditPropertyCellConfirmationDialog.Show();
+						GRollInitiative.Instance.EditPropertyCellConfirmationDialog.Show();
 					}
 				}
 			};
@@ -485,7 +493,7 @@ public partial class CreatureControl : ResizableHContainer {
 						var saveButton = new Button();
 						saveButton.Text = "S";
 						saveButton.Pressed += () => {
-							GD.Print("TODO: Implement Save");
+							GRollInitiative.SaveCreatureControlToGallery(this);
 						};
 						buttonContainer.AddChild(saveButton);
 
